@@ -5,14 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const SearchResults = () => {
   const location = useLocation();
-  const searchTerm = new URLSearchParams(location.search).get('query') || '';
+  const navigate = useNavigate();
+  const initialSearchTerm = new URLSearchParams(location.search).get('query') || '';
+  const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
   const [selectedResults, setSelectedResults] = useState([]);
   const [yearFilter, setYearFilter] = useState('');
   const [authorFilter, setAuthorFilter] = useState('');
+  const [savedResults, setSavedResults] = useState([]);
 
   const fetchPubMedResults = async () => {
     const response = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(searchTerm)}&retmode=json&retmax=20`);
@@ -25,7 +28,7 @@ const SearchResults = () => {
     return Object.values(summaryData.result).filter(item => item.uid);
   };
 
-  const { data: results, isLoading, isError } = useQuery({
+  const { data: results, isLoading, isError, refetch } = useQuery({
     queryKey: ['pubmedSearch', searchTerm],
     queryFn: fetchPubMedResults,
     enabled: !!searchTerm,
@@ -38,15 +41,24 @@ const SearchResults = () => {
   };
 
   const handleSaveSelection = () => {
-    console.log('Selected results:', selectedResults);
-    // Here you would handle saving the selected results to the project
+    setSavedResults(prev => [...new Set([...prev, ...selectedResults])]);
+    setSelectedResults([]);
   };
 
   const handleDownloadPDFs = () => {
-    // This is a placeholder function. In a real-world scenario, you'd need to
-    // check for freely available PDFs and handle the download process.
     console.log('Downloading PDFs for:', selectedResults);
     alert('Downloading PDFs for selected articles. This feature requires integration with PubMed Central API.');
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    navigate(`/search-results?query=${encodeURIComponent(searchTerm)}`);
+    refetch();
+  };
+
+  const handleSaveAndSearch = () => {
+    handleSaveSelection();
+    handleSearch(new Event('submit'));
   };
 
   const filteredResults = results?.filter(result => {
@@ -59,7 +71,21 @@ const SearchResults = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">Search Results for "{searchTerm}"</h1>
+      <h1 className="text-3xl font-bold mb-6">Search Results</h1>
+
+      <form onSubmit={handleSearch} className="mb-6">
+        <div className="flex gap-2">
+          <Input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Refine your search query"
+            className="flex-grow"
+          />
+          <Button type="submit">Search</Button>
+          <Button type="button" onClick={handleSaveAndSearch}>Save Results and Search Again</Button>
+        </div>
+      </form>
 
       <div className="mb-4 flex space-x-4">
         <Select onValueChange={setYearFilter}>
@@ -88,6 +114,24 @@ const SearchResults = () => {
         <div className="mb-4 space-x-2">
           <Button onClick={handleSaveSelection}>Save Selected Results</Button>
           <Button onClick={handleDownloadPDFs}>Download Selected PDFs</Button>
+        </div>
+      )}
+
+      {savedResults.length > 0 && (
+        <div className="mb-4">
+          <h2 className="text-2xl font-bold mb-2">Saved Results</h2>
+          <ul>
+            {savedResults.map(uid => {
+              const result = results?.find(r => r.uid === uid);
+              return result ? (
+                <li key={uid} className="mb-2">
+                  <a href={`https://pubmed.ncbi.nlm.nih.gov/${uid}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                    {result.title}
+                  </a>
+                </li>
+              ) : null;
+            })}
+          </ul>
         </div>
       )}
 
