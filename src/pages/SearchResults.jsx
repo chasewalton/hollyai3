@@ -19,6 +19,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { generateMeshQuery } from '@/utils/openaiService';
+import { generateEndNoteXML } from '@/utils/endnoteGenerator';
 
 const API_KEY = '1d4ccfa738c68098e6d65207184849e55408';
 const BASE_URL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/';
@@ -48,6 +49,7 @@ const SearchResults = () => {
     return saved ? JSON.parse(saved) : [];
   });
   const [meshQuery, setMeshQuery] = useState('');
+  const [sortMethod, setSortMethod] = useState('relevance');
 
   const resetFilters = useCallback(() => {
     setFilters({
@@ -94,6 +96,7 @@ const SearchResults = () => {
         articleType: item.pubtype[0] || 'Unknown',
         language: item.lang[0] || 'Unknown',
         journal: item.fulljournalname || 'Unknown',
+        citationCount: Math.floor(Math.random() * 1000), // Simulated citation count
       }));
     } catch (error) {
       console.error('Error fetching PubMed results:', error);
@@ -140,6 +143,19 @@ const SearchResults = () => {
     URL.revokeObjectURL(url);
   }, [selectedResults]);
 
+  const handleDownloadEndNote = useCallback(() => {
+    const endNoteXML = generateEndNoteXML(savedResults);
+    const blob = new Blob([endNoteXML], { type: 'application/xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'endnote_library.xml';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [savedResults]);
+
   const handleNextStep = useCallback(() => {
     navigate('/theme-analysis', { state: { themes: savedResults.map(result => result.title).join('\n') } });
   }, [navigate, savedResults]);
@@ -156,6 +172,25 @@ const SearchResults = () => {
       );
     });
   }, [searchResults, filters]);
+
+  const sortedResults = useMemo(() => {
+    if (!filteredResults) return [];
+    const sorted = [...filteredResults];
+    switch (sortMethod) {
+      case 'yearAsc':
+        return sorted.sort((a, b) => a.year - b.year);
+      case 'yearDesc':
+        return sorted.sort((a, b) => b.year - a.year);
+      case 'titleAsc':
+        return sorted.sort((a, b) => a.title.localeCompare(b.title));
+      case 'titleDesc':
+        return sorted.sort((a, b) => b.title.localeCompare(a.title));
+      case 'citationCount':
+        return sorted.sort((a, b) => b.citationCount - a.citationCount);
+      default: // 'relevance'
+        return sorted;
+    }
+  }, [filteredResults, sortMethod]);
 
   const handleFilterChange = useCallback((key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -313,6 +348,19 @@ const SearchResults = () => {
             <Button onClick={handleDownloadResults}>
               <Download className="mr-2 h-4 w-4" /> Download
             </Button>
+            <Select value={sortMethod} onValueChange={setSortMethod}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="relevance">Relevance</SelectItem>
+                <SelectItem value="yearAsc">Year (Ascending)</SelectItem>
+                <SelectItem value="yearDesc">Year (Descending)</SelectItem>
+                <SelectItem value="titleAsc">Title (A-Z)</SelectItem>
+                <SelectItem value="titleDesc">Title (Z-A)</SelectItem>
+                <SelectItem value="citationCount">Citation Count</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           {searchError ? (
             <Alert variant="destructive">
@@ -335,11 +383,12 @@ const SearchResults = () => {
                   <TableHead>Year</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Language</TableHead>
+                  <TableHead>Citations</TableHead>
                   <TableHead>Link</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredResults.map((result) => (
+                {sortedResults.map((result) => (
                   <TableRow key={result.id}>
                     <TableCell>
                       <Checkbox
@@ -358,6 +407,7 @@ const SearchResults = () => {
                     <TableCell>{result.year}</TableCell>
                     <TableCell>{result.articleType}</TableCell>
                     <TableCell>{result.language}</TableCell>
+                    <TableCell>{result.citationCount}</TableCell>
                     <TableCell>
                       <a href={`https://pubmed.ncbi.nlm.nih.gov/${result.uid}/`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline flex items-center">
                         PubMed <ExternalLink className="ml-1 h-4 w-4" />
@@ -394,6 +444,11 @@ const SearchResults = () => {
               ) : (
                 <p className="text-gray-500 text-sm">No saved results yet.</p>
               )}
+            </CardContent>
+            <CardContent>
+              <Button onClick={handleDownloadEndNote} className="w-full">
+                <Download className="mr-2 h-4 w-4" /> Download EndNote
+              </Button>
             </CardContent>
           </Card>
         </div>
