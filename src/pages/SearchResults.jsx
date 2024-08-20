@@ -50,6 +50,8 @@ const SearchResults = () => {
   });
   const [meshQuery, setMeshQuery] = useState('');
   const [sortMethod, setSortMethod] = useState('relevance');
+  const [currentPage, setCurrentPage] = useState(1);
+  const resultsPerPage = 10;
 
   const resetFilters = useCallback(() => {
     setFilters({
