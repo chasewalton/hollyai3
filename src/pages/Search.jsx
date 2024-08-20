@@ -151,18 +151,10 @@ const Search = () => {
               max="29"
             />
           </div>
-        </div>
-
-        <h2 className="text-2xl font-bold mb-4">PubMed Search</h2>
-        <div className="flex gap-2">
-          <Input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Enter your search query in casual language"
-            className="flex-grow"
-          />
-          <Button type="submit">Save and Search</Button>
+        <div className="flex justify-center mt-6">
+          <Button onClick={() => navigate('/search-results', { state: { projectInfo, performSearch: true } })}>
+          Go to Search
+          </Button>
         </div>
       </form>
     </div>
