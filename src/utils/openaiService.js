@@ -8,7 +8,7 @@ const openai = new OpenAI({
 export const generateMeshQuery = async (searchTerm) => {
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "chatgpt-4o-latest",
       messages: [
         {
           role: "system",
@@ -20,7 +20,6 @@ export const generateMeshQuery = async (searchTerm) => {
         }
       ],
     });
-
     return completion.choices[0].message.content.trim();
   } catch (error) {
     console.error('Error generating MeSH query:', error);
@@ -31,7 +30,7 @@ export const generateMeshQuery = async (searchTerm) => {
 export const generateAITheme = async (existingThemes) => {
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "chatgpt-4o-latest",
       messages: [
         {
           role: "system",
@@ -43,7 +42,6 @@ export const generateAITheme = async (existingThemes) => {
         }
       ],
     });
-
     return completion.choices[0].message.content.trim();
   } catch (error) {
     console.error('Error generating AI theme:', error);
@@ -53,19 +51,28 @@ export const generateAITheme = async (existingThemes) => {
 
 export const processContentAndGenerateIntroduction = async (processedContent, themeData) => {
   try {
-    const contentSummary = processedContent.map(item => `ID: ${item.id}\nAbstract: ${item.abstract}\nContent: ${item.content}`).join('\n\n');
+    const contentSummary = processedContent.map(item => `
+      ID: ${item.id}
+      Abstract: ${item.abstract}
+      Content: ${item.content}
+      Hybrid Retrieval-Generation: ${item.hybridRetrievalGeneration}
+      Knowledge-Enhanced Text Generation: ${item.knowledgeEnhancedTextGeneration}
+      Memory-Augmented Neural Networks: ${item.memoryAugmentedNeuralNetworks}
+      Attention Mechanisms Content Extraction: ${item.attentionMechanismsContentExtraction}
+    `).join('\n\n');
+
     const themeSummary = themeData.map(theme => `Theme: ${theme.text}, Importance: ${theme.rating}`).join('\n');
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo-16k", // Using a model with larger context window
+      model: "chatgpt-4o-latest",
       messages: [
         {
           role: "system",
-          content: "You are an expert academic writer tasked with generating a comprehensive introduction for a research paper. Use the provided content and themes to create a well-structured, informative introduction that sets the context for the research, highlights key themes, and presents a clear research question or objective. Your response should demonstrate the use of Hybrid Retrieval-Generation Models, Knowledge-Enhanced Text Generation, Memory-Augmented Neural Networks (MANNs), and Attention Mechanisms in synthesizing the information."
+          content: "You are an expert academic writer with advanced knowledge in AI and NLP techniques. Your task is to generate a comprehensive introduction for a research paper, leveraging the provided content, themes, and advanced NLP processing results. The introduction should demonstrate a deep understanding of Hybrid Retrieval-Generation Models, Knowledge-Enhanced Text Generation, Memory-Augmented Neural Networks (MANNs), and Attention Mechanisms in synthesizing information."
         },
         {
           role: "user",
-          content: `Based on the following processed content and themes, generate a comprehensive introduction for a research paper:
+          content: `Based on the following processed content, themes, and advanced NLP processing results, generate a sophisticated introduction for a research paper:
 
 Processed Content:
 ${contentSummary}
@@ -73,19 +80,28 @@ ${contentSummary}
 Themes and their importance:
 ${themeSummary}
 
-Please write an introduction that:
-1. Provides context for the research topic
-2. Highlights the key themes and their significance
-3. Identifies gaps in current knowledge or areas of controversy
-4. Presents a clear research question or objective
-5. Briefly outlines the structure of the paper
-6. Demonstrates the use of advanced NLP techniques in synthesizing the information
+Create an introduction that:
+1. Provides a nuanced context for the research topic, showing how it fits into the broader field of AI and NLP.
+2. Highlights the key themes and their significance, demonstrating how they interrelate and contribute to the research question.
+3. Identifies specific gaps in current knowledge or areas of controversy, referencing the provided content.
+4. Presents a clear, focused research question or objective that addresses these gaps or controversies.
+5. Outlines the structure of the paper, explaining how each section will contribute to answering the research question.
+6. Demonstrates the innovative use of advanced NLP techniques (Hybrid Retrieval-Generation, Knowledge-Enhanced Text Generation, MANNs, and Attention Mechanisms) in synthesizing the information.
+7. Includes precise in-line citations referencing the provided content IDs.
 
-The introduction should be well-structured, engaging, and approximately 500-750 words long.`
+The introduction should be:
+- Sophisticated and academically rigorous
+- Well-structured and engaging
+- Approximately 750-1000 words long
+- Use in-line citations in the format [ID] when referencing specific information from the processed content
+- Showcase a deep understanding of the AI and NLP techniques used in the research
+
+Additionally, conclude the introduction with a brief paragraph that outlines how the paper will leverage these advanced NLP techniques to address the research question.`
         }
       ],
+      max_tokens: 2000,
+      temperature: 0.7,
     });
-
     return completion.choices[0].message.content.trim();
   } catch (error) {
     console.error('Error generating introduction:', error);
