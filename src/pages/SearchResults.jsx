@@ -175,7 +175,7 @@ const SearchResults = () => {
     });
   }, [searchResults, filters]);
 
-  const sortedResults = useMemo(() => {
+const sortedResults = useMemo(() => {
     if (!filteredResults) return [];
     const sorted = [...filteredResults];
     switch (sortMethod) {
@@ -193,6 +193,25 @@ const SearchResults = () => {
         return sorted;
     }
   }, [filteredResults, sortMethod]);
+
+  const paginatedResults = useMemo(() => {
+    const startIndex = (currentPage - 1) * resultsPerPage;
+    return sortedResults.slice(startIndex, startIndex + resultsPerPage);
+  }, [sortedResults, currentPage]);
+
+  const totalPages = Math.ceil(sortedResults.length / resultsPerPage);
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
+
+  const handleSelectAll = (checked) => {
+    if (checked) {
+      setSelectedResults(paginatedResults);
+    } else {
+      setSelectedResults([]);
+    }
+  };
 
   const handleFilterChange = useCallback((key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
