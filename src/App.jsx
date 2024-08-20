@@ -6,6 +6,7 @@ import { navItems } from "./nav-items";
 import Navigation from "./components/Navigation";
 import SearchResults from "./pages/SearchResults";
 import ThemeAnalysis from "./pages/ThemeAnalysis";
+import Introduction from "./pages/Introduction";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ const App = () => (
           ))}
           <Route path="/search-results" element={<SearchResults />} />
           <Route path="/theme-analysis" element={<ThemeAnalysis />} />
+          <Route path="/introduction" element={<Introduction />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
