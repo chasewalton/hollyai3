@@ -9,6 +9,7 @@ const IntroductionDraft = () => {
   const [steps, setSteps] = useState([
     { name: 'Hybrid Retrieval-Generation Models', progress: 0, description: 'Retrieving relevant information from PDFs and generating initial content.' },
     { name: 'Knowledge-Enhanced Text Generation', progress: 0, description: 'Using extracted knowledge to generate factually accurate text with in-line citations.' },
+    { name: 'Memory-Augmented Neural Networks (MANNs)', progress: 0, description: 'Storing and accessing information from multiple PDFs to effectively combine information from different sources.' },
     { name: 'Content Extraction', progress: 0, description: 'Extracting key concepts, quotes, and summaries from the retrieved information.' },
     { name: 'Draft Generation', progress: 0, description: 'Generating the introduction draft using the extracted content.' },
     { name: 'Final Refinement', progress: 0, description: 'Refining and polishing the generated draft for coherence and clarity.' }
