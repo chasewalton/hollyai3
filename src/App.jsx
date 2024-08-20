@@ -7,6 +7,7 @@ import Navigation from "./components/Navigation";
 import SearchResults from "./pages/SearchResults";
 import ThemeAnalysis from "./pages/ThemeAnalysis";
 import IntroductionDraft from "./pages/IntroductionDraft";
+import Project from "./pages/Project";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/search-results" element={<SearchResults />} />
           <Route path="/theme-analysis" element={<ThemeAnalysis />} />
           <Route path="/introduction-draft" element={<IntroductionDraft />} />
+          <Route path="/project" element={<Project />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

@@ -7,6 +7,16 @@ import { ArrowLeft } from 'lucide-react';
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const IntroductionDraft = () => {
   const location = useLocation();
@@ -14,6 +24,7 @@ const IntroductionDraft = () => {
   const [introductionDraft, setIntroductionDraft] = useState('');
   const [showIntroduction, setShowIntroduction] = useState(false);
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
+  const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
   const [steps, setSteps] = useState([
     { name: 'Hybrid Retrieval-Generation Models', progress: 0, speed: 0.5, description: 'Retrieving relevant information from PDFs and generating initial content.' },
     { name: 'Knowledge-Enhanced Text Generation', progress: 0, speed: 0.8, description: 'Using extracted knowledge to generate factually accurate text with in-line citations.' },
@@ -42,12 +53,27 @@ const IntroductionDraft = () => {
   };
 
   const handleDiscard = () => {
-    navigate('/');
+    setIsDiscardDialogOpen(true);
   };
 
-  const handleSave = () => {
-    // Implement save functionality here
-    alert('Introduction draft saved!');
+  const handleDiscardConfirm = () => {
+    setIsDiscardDialogOpen(false);
+    navigate('/project');
+  };
+
+  const handleDiscardCancel = () => {
+    setIsDiscardDialogOpen(false);
+  };
+
+  const handleSave = async () => {
+    try {
+      // Simulating sending data to the backend
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      navigate('/project');
+    } catch (error) {
+      console.error('Error saving introduction draft:', error);
+      alert('Failed to save the introduction draft. Please try again.');
+    }
   };
 
   const handleFeedbackChange = (e) => {
@@ -58,7 +84,6 @@ const IntroductionDraft = () => {
   };
 
   const handleSubmitFeedback = () => {
-    // Implement feedback submission functionality here
     console.log('Feedback submitted:', feedback);
     alert('Feedback submitted successfully!');
   };
@@ -192,6 +217,20 @@ const IntroductionDraft = () => {
           </Card>
         </div>
       </div>
+      <AlertDialog open={isDiscardDialogOpen} onOpenChange={setIsDiscardDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your introduction draft.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleDiscardCancel}>No</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDiscardConfirm}>Yes</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
