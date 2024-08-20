@@ -74,11 +74,6 @@ const SearchResults = () => {
     refetch();
   };
 
-  const handleSaveAndSearch = () => {
-    handleSaveSelection();
-    handleSearch(new Event('submit'));
-  };
-
   const filteredResults = results?.filter(result => {
     const yearMatch = !yearFilter || result.pubdate.includes(yearFilter);
     const authorMatch = !authorFilter || result.authors.some(author => 
@@ -113,168 +108,178 @@ const SearchResults = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 flex">
-      <div className="w-3/4 pr-4">
-        <h1 className="text-3xl font-bold mb-6">Search Results</h1>
-
-        <form onSubmit={handleSearch} className="mb-6">
-          <div className="flex gap-2">
-            <Input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Refine your search query"
-              className="flex-grow"
-            />
-            <Button type="submit">Search</Button>
-            <Button type="button" onClick={handleSaveAndSearch}>Save Results and Search Again</Button>
-          </div>
-        </form>
-
-        <div className="mb-4 flex flex-wrap gap-4">
-          <Select value={yearFilter} onValueChange={setYearFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by Year" />
-            </SelectTrigger>
-            <SelectContent>
-              {['2024', '2023', '2022', '2021', '2020'].map(year => (
-                <SelectItem key={year} value={year}>{year}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Input
-            placeholder="Filter by Author"
-            value={authorFilter}
-            onChange={(e) => setAuthorFilter(e.target.value)}
-            className="w-[200px]"
-          />
-
-          <Select value={textAvailability} onValueChange={setTextAvailability}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Text Availability" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="abstract">Abstract</SelectItem>
-              <SelectItem value="free_full_text">Free Full Text</SelectItem>
-              <SelectItem value="full_text">Full Text</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={articleType} onValueChange={setArticleType}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Article Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Books and Documents">Books and Documents</SelectItem>
-              <SelectItem value="Clinical Trial">Clinical Trial</SelectItem>
-              <SelectItem value="Meta-Analysis">Meta-Analysis</SelectItem>
-              <SelectItem value="Randomized Controlled Trial">Randomized Controlled Trial</SelectItem>
-              <SelectItem value="Review">Review</SelectItem>
-              <SelectItem value="Systematic Review">Systematic Review</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={publicationDate} onValueChange={setPublicationDate}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Publication Date" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1_year">1 year</SelectItem>
-              <SelectItem value="5_years">5 years</SelectItem>
-              <SelectItem value="10_years">10 years</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Button onClick={resetFilters}>Reset Filters</Button>
-        </div>
-
-        <div className="mb-4">
-          <Button onClick={() => setIsTimelineExpanded(!isTimelineExpanded)}>
-            {isTimelineExpanded ? 'Collapse Timeline' : 'Expand Timeline'}
-            {isTimelineExpanded ? <ChevronUp className="ml-2" /> : <ChevronDown className="ml-2" />}
-          </Button>
-        </div>
-
-        {isTimelineExpanded && timelineData && (
-          <Card className="mb-4">
-            <CardHeader>
-              <CardTitle>Search Results Timeline</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Year</TableHead>
-                    <TableHead>Number of Results</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {Object.entries(timelineData).sort((a, b) => b[0] - a[0]).map(([year, count]) => (
-                    <TableRow key={year}>
-                      <TableCell>{year}</TableCell>
-                      <TableCell>{count}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        )}
-
-        {isLoading && <p>Loading...</p>}
-        {isError && <p>Error fetching results. Please try again.</p>}
-
-        {filteredResults && (
-          <div className="mb-4 space-x-2">
-            <Button onClick={handleSaveSelection}>Save Selected Results</Button>
-            <Button onClick={handleDownloadPDFs}>Download Selected PDFs</Button>
-          </div>
-        )}
-
-        {filteredResults && (
-          <div className="grid gap-4">
-            {filteredResults.map((result) => (
-              <Card key={result.uid}>
-                <CardHeader className="flex flex-row items-center space-x-4">
-                  <Checkbox
-                    id={`result-${result.uid}`}
-                    checked={selectedResults.includes(result.uid)}
-                    onCheckedChange={() => handleResultSelection(result.uid)}
-                  />
-                  <CardTitle>{result.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-600">Authors: {result.authors.map(author => author.name).join(', ')}</p>
-                  <p className="text-sm text-gray-600">Published: {result.pubdate}</p>
-                  <a href={`https://pubmed.ncbi.nlm.nih.gov/${result.uid}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                    View on PubMed
-                  </a>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+    <div className="container mx-auto p-4">
+      <div className="mb-6 flex justify-between items-center">
+        <h1 className="text-3xl font-bold">PubMed Search</h1>
+        <Button size="lg">Next Step</Button>
       </div>
 
-      <div className="w-1/4 pl-4 border-l">
-        <h2 className="text-2xl font-bold mb-4">Saved Results</h2>
-        {savedResults.length > 0 ? (
-          <ul className="space-y-2">
-            {savedResults.map(result => (
-              <li key={result.uid} className="flex items-center justify-between">
-                <a href={`https://pubmed.ncbi.nlm.nih.gov/${result.uid}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline truncate mr-2">
-                  {result.title}
-                </a>
-                <Button variant="ghost" size="sm" onClick={() => handleRemoveSavedResult(result.uid)}>
-                  <X className="h-4 w-4" />
-                </Button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>No saved results yet.</p>
-        )}
+      <form onSubmit={handleSearch} className="mb-6">
+        <div className="flex gap-2">
+          <Input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Enter your search query"
+            className="flex-grow"
+          />
+          <Button type="submit">Search</Button>
+        </div>
+      </form>
+
+      <div className="flex gap-4">
+        {/* Filters Column */}
+        <div className="w-1/4">
+          <h2 className="text-xl font-semibold mb-4">Filters</h2>
+          <div className="space-y-4">
+            <Select value={yearFilter} onValueChange={setYearFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by Year" />
+              </SelectTrigger>
+              <SelectContent>
+                {['2024', '2023', '2022', '2021', '2020'].map(year => (
+                  <SelectItem key={year} value={year}>{year}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Input
+              placeholder="Filter by Author"
+              value={authorFilter}
+              onChange={(e) => setAuthorFilter(e.target.value)}
+            />
+
+            <Select value={textAvailability} onValueChange={setTextAvailability}>
+              <SelectTrigger>
+                <SelectValue placeholder="Text Availability" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="abstract">Abstract</SelectItem>
+                <SelectItem value="free_full_text">Free Full Text</SelectItem>
+                <SelectItem value="full_text">Full Text</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={articleType} onValueChange={setArticleType}>
+              <SelectTrigger>
+                <SelectValue placeholder="Article Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Books and Documents">Books and Documents</SelectItem>
+                <SelectItem value="Clinical Trial">Clinical Trial</SelectItem>
+                <SelectItem value="Meta-Analysis">Meta-Analysis</SelectItem>
+                <SelectItem value="Randomized Controlled Trial">Randomized Controlled Trial</SelectItem>
+                <SelectItem value="Review">Review</SelectItem>
+                <SelectItem value="Systematic Review">Systematic Review</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={publicationDate} onValueChange={setPublicationDate}>
+              <SelectTrigger>
+                <SelectValue placeholder="Publication Date" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1_year">1 year</SelectItem>
+                <SelectItem value="5_years">5 years</SelectItem>
+                <SelectItem value="10_years">10 years</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Button onClick={resetFilters} className="w-full">Reset Filters</Button>
+          </div>
+
+          <div className="mt-4">
+            <Button onClick={() => setIsTimelineExpanded(!isTimelineExpanded)} className="w-full">
+              {isTimelineExpanded ? 'Collapse Timeline' : 'Expand Timeline'}
+              {isTimelineExpanded ? <ChevronUp className="ml-2" /> : <ChevronDown className="ml-2" />}
+            </Button>
+          </div>
+
+          {isTimelineExpanded && timelineData && (
+            <Card className="mt-4">
+              <CardHeader>
+                <CardTitle>Search Results Timeline</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Year</TableHead>
+                      <TableHead>Number of Results</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {Object.entries(timelineData).sort((a, b) => b[0] - a[0]).map(([year, count]) => (
+                      <TableRow key={year}>
+                        <TableCell>{year}</TableCell>
+                        <TableCell>{count}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Search Results Column */}
+        <div className="w-1/2">
+          <h2 className="text-xl font-semibold mb-4">Search Results</h2>
+          {isLoading && <p>Loading...</p>}
+          {isError && <p>Error fetching results. Please try again.</p>}
+
+          {filteredResults && (
+            <div className="mb-4 space-x-2">
+              <Button onClick={handleSaveSelection}>Save Selected Results</Button>
+              <Button onClick={handleDownloadPDFs}>Download Selected PDFs</Button>
+            </div>
+          )}
+
+          {filteredResults && (
+            <div className="space-y-4">
+              {filteredResults.map((result) => (
+                <Card key={result.uid}>
+                  <CardHeader className="flex flex-row items-center space-x-4">
+                    <Checkbox
+                      id={`result-${result.uid}`}
+                      checked={selectedResults.includes(result.uid)}
+                      onCheckedChange={() => handleResultSelection(result.uid)}
+                    />
+                    <CardTitle>{result.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-gray-600">Authors: {result.authors.map(author => author.name).join(', ')}</p>
+                    <p className="text-sm text-gray-600">Published: {result.pubdate}</p>
+                    <a href={`https://pubmed.ncbi.nlm.nih.gov/${result.uid}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                      View on PubMed
+                    </a>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Saved Results Column */}
+        <div className="w-1/4">
+          <h2 className="text-xl font-semibold mb-4">Saved Results</h2>
+          {savedResults.length > 0 ? (
+            <ul className="space-y-2">
+              {savedResults.map(result => (
+                <li key={result.uid} className="flex items-center justify-between">
+                  <a href={`https://pubmed.ncbi.nlm.nih.gov/${result.uid}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline truncate mr-2">
+                    {result.title}
+                  </a>
+                  <Button variant="ghost" size="sm" onClick={() => handleRemoveSavedResult(result.uid)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No saved results yet.</p>
+          )}
+        </div>
       </div>
     </div>
   );
