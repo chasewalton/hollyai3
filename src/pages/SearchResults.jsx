@@ -15,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import LoadingOverlay from '@/components/LoadingOverlay';
 
 const SearchResults = () => {
   const location = useLocation();
@@ -29,6 +30,7 @@ const SearchResults = () => {
   const [textAvailability, setTextAvailability] = useState('');
   const [articleType, setArticleType] = useState('');
   const [publicationDate, setPublicationDate] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSaveResults = () => {
     const newSavedResults = filteredResults.filter(result => selectedResults.includes(result.uid));
@@ -118,18 +120,20 @@ const SearchResults = () => {
       return;
     }
 
-    const selectedArticles = filteredResults.filter(result => selectedResults.includes(result.uid));
-    const articlesData = await Promise.all(selectedArticles.map(async (article) => {
-      const abstractResponse = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${article.uid}&retmode=text&rettype=abstract`);
-      const abstractText = await abstractResponse.text();
-      return {
-        title: article.title,
-        abstract: abstractText,
-        fullText: article.pmc ? `https://www.ncbi.nlm.nih.gov/pmc/articles/${article.pmc}/` : null
-      };
-    }));
+    setIsLoading(true);
 
     try {
+      const selectedArticles = filteredResults.filter(result => selectedResults.includes(result.uid));
+      const articlesData = await Promise.all(selectedArticles.map(async (article) => {
+        const abstractResponse = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${article.uid}&retmode=text&rettype=abstract`);
+        const abstractText = await abstractResponse.text();
+        return {
+          title: article.title,
+          abstract: abstractText,
+          fullText: article.pmc ? `https://www.ncbi.nlm.nih.gov/pmc/articles/${article.pmc}/` : null
+        };
+      }));
+
       const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -150,15 +154,18 @@ const SearchResults = () => {
       }
 
       const themes = await openAIResponse.json();
+      setIsLoading(false);
       navigate('/theme-analysis', { state: { themes: themes.choices[0].message.content } });
     } catch (error) {
       console.error('Error in theme analysis:', error);
+      setIsLoading(false);
       alert('An error occurred during theme analysis. Please try again.');
     }
   };
 
   return (
     <div className="container mx-auto p-4">
+      <LoadingOverlay isLoading={isLoading} />
       <div className="mb-6 flex justify-between items-center">
         <h1 className="text-3xl font-bold">PubMed Search</h1>
         <Button size="lg" onClick={handleNextStep}>Next Step</Button>
