@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLocation, useNavigate } from 'react-router-dom';
+import { X } from 'lucide-react';
 
 const SearchResults = () => {
   const location = useLocation();
@@ -41,8 +42,13 @@ const SearchResults = () => {
   };
 
   const handleSaveSelection = () => {
-    setSavedResults(prev => [...new Set([...prev, ...selectedResults])]);
+    const newSavedResults = selectedResults.map(uid => results.find(r => r.uid === uid)).filter(Boolean);
+    setSavedResults(prev => [...prev, ...newSavedResults]);
     setSelectedResults([]);
+  };
+
+  const handleRemoveSavedResult = (uid) => {
+    setSavedResults(prev => prev.filter(result => result.uid !== uid));
   };
 
   const handleDownloadPDFs = () => {
@@ -70,94 +76,98 @@ const SearchResults = () => {
   });
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">Search Results</h1>
+    <div className="container mx-auto p-4 flex">
+      <div className="w-3/4 pr-4">
+        <h1 className="text-3xl font-bold mb-6">Search Results</h1>
 
-      <form onSubmit={handleSearch} className="mb-6">
-        <div className="flex gap-2">
+        <form onSubmit={handleSearch} className="mb-6">
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Refine your search query"
+              className="flex-grow"
+            />
+            <Button type="submit">Search</Button>
+            <Button type="button" onClick={handleSaveAndSearch}>Save Results and Search Again</Button>
+          </div>
+        </form>
+
+        <div className="mb-4 flex space-x-4">
+          <Select onValueChange={setYearFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by Year" />
+            </SelectTrigger>
+            <SelectContent>
+              {['2023', '2022', '2021', '2020', '2019'].map(year => (
+                <SelectItem key={year} value={year}>{year}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           <Input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Refine your search query"
-            className="flex-grow"
+            placeholder="Filter by Author"
+            value={authorFilter}
+            onChange={(e) => setAuthorFilter(e.target.value)}
+            className="w-[200px]"
           />
-          <Button type="submit">Search</Button>
-          <Button type="button" onClick={handleSaveAndSearch}>Save Results and Search Again</Button>
         </div>
-      </form>
 
-      <div className="mb-4 flex space-x-4">
-        <Select onValueChange={setYearFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by Year" />
-          </SelectTrigger>
-          <SelectContent>
-            {['2023', '2022', '2021', '2020', '2019'].map(year => (
-              <SelectItem key={year} value={year}>{year}</SelectItem>
+        {isLoading && <p>Loading...</p>}
+        {isError && <p>Error fetching results. Please try again.</p>}
+
+        {filteredResults && (
+          <div className="mb-4 space-x-2">
+            <Button onClick={handleSaveSelection}>Save Selected Results</Button>
+            <Button onClick={handleDownloadPDFs}>Download Selected PDFs</Button>
+          </div>
+        )}
+
+        {filteredResults && (
+          <div className="grid gap-4">
+            {filteredResults.map((result) => (
+              <Card key={result.uid}>
+                <CardHeader className="flex flex-row items-center space-x-4">
+                  <Checkbox
+                    id={`result-${result.uid}`}
+                    checked={selectedResults.includes(result.uid)}
+                    onCheckedChange={() => handleResultSelection(result.uid)}
+                  />
+                  <CardTitle>{result.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-600">Authors: {result.authors.map(author => author.name).join(', ')}</p>
+                  <p className="text-sm text-gray-600">Published: {result.pubdate}</p>
+                  <a href={`https://pubmed.ncbi.nlm.nih.gov/${result.uid}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                    View on PubMed
+                  </a>
+                </CardContent>
+              </Card>
             ))}
-          </SelectContent>
-        </Select>
-
-        <Input
-          placeholder="Filter by Author"
-          value={authorFilter}
-          onChange={(e) => setAuthorFilter(e.target.value)}
-          className="w-[200px]"
-        />
+          </div>
+        )}
       </div>
 
-      {isLoading && <p>Loading...</p>}
-      {isError && <p>Error fetching results. Please try again.</p>}
-
-      {filteredResults && (
-        <div className="mb-4 space-x-2">
-          <Button onClick={handleSaveSelection}>Save Selected Results</Button>
-          <Button onClick={handleDownloadPDFs}>Download Selected PDFs</Button>
-        </div>
-      )}
-
-      {savedResults.length > 0 && (
-        <div className="mb-4">
-          <h2 className="text-2xl font-bold mb-2">Saved Results</h2>
-          <ul>
-            {savedResults.map(uid => {
-              const result = results?.find(r => r.uid === uid);
-              return result ? (
-                <li key={uid} className="mb-2">
-                  <a href={`https://pubmed.ncbi.nlm.nih.gov/${uid}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                    {result.title}
-                  </a>
-                </li>
-              ) : null;
-            })}
-          </ul>
-        </div>
-      )}
-
-      {filteredResults && (
-        <div className="grid gap-4">
-          {filteredResults.map((result) => (
-            <Card key={result.uid}>
-              <CardHeader className="flex flex-row items-center space-x-4">
-                <Checkbox
-                  id={`result-${result.uid}`}
-                  checked={selectedResults.includes(result.uid)}
-                  onCheckedChange={() => handleResultSelection(result.uid)}
-                />
-                <CardTitle>{result.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-600">Authors: {result.authors.map(author => author.name).join(', ')}</p>
-                <p className="text-sm text-gray-600">Published: {result.pubdate}</p>
-                <a href={`https://pubmed.ncbi.nlm.nih.gov/${result.uid}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                  View on PubMed
+      <div className="w-1/4 pl-4 border-l">
+        <h2 className="text-2xl font-bold mb-4">Saved Results</h2>
+        {savedResults.length > 0 ? (
+          <ul className="space-y-2">
+            {savedResults.map(result => (
+              <li key={result.uid} className="flex items-center justify-between">
+                <a href={`https://pubmed.ncbi.nlm.nih.gov/${result.uid}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline truncate mr-2">
+                  {result.title}
                 </a>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+                <Button variant="ghost" size="sm" onClick={() => handleRemoveSavedResult(result.uid)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No saved results yet.</p>
+        )}
+      </div>
     </div>
   );
 };
