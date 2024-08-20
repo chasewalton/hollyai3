@@ -9,6 +9,7 @@ const IntroductionDraft = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [introductionDraft, setIntroductionDraft] = useState('');
+  const [showIntroduction, setShowIntroduction] = useState(false);
   const [steps, setSteps] = useState([
     { name: 'Hybrid Retrieval-Generation Models', progress: 0, speed: 0.5, description: 'Retrieving relevant information from PDFs and generating initial content.' },
     { name: 'Knowledge-Enhanced Text Generation', progress: 0, speed: 0.8, description: 'Using extracted knowledge to generate factually accurate text with in-line citations.' },
@@ -32,6 +33,7 @@ const IntroductionDraft = () => {
         await processFixedStep(i);
       }
       setIntroductionDraft(location.state?.introductionDraft || 'Introduction draft generated successfully.');
+      setShowIntroduction(true);
     };
 
     processSteps();
@@ -95,7 +97,7 @@ const IntroductionDraft = () => {
             </CardHeader>
             <CardContent>
               <div className="whitespace-pre-wrap">
-                {introductionDraft || 'Generating introduction...'}
+                {showIntroduction ? introductionDraft : 'Generating introduction...'}
               </div>
             </CardContent>
           </Card>
