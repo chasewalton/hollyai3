@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import LoadingOverlay from '@/components/LoadingOverlay';
+import { useMeshTerms, generateMeshCombinations } from '@/utils/meshConverter';
 
 const SearchResults = () => {
   const location = useLocation();
@@ -36,6 +37,18 @@ const SearchResults = () => {
   const [articleType, setArticleType] = useState('');
   const [publicationDate, setPublicationDate] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [meshSearchTerm, setMeshSearchTerm] = useState('');
+
+  const { data: meshTerms, isLoading: isMeshLoading } = useMeshTerms(searchTerm);
+  const [meshCombinations, setMeshCombinations] = useState([]);
+
+  useEffect(() => {
+    if (meshTerms && meshTerms.length > 0) {
+      const combinations = generateMeshCombinations(meshTerms);
+      setMeshCombinations(combinations);
+      setMeshSearchTerm(combinations[0]);
+    }
+  }, [meshTerms]);
 
   const handleSaveResults = () => {
     const newSavedResults = filteredResults.filter(result => selectedResults.includes(result.uid));
@@ -54,7 +67,7 @@ const SearchResults = () => {
   };
 
   const fetchPubMedResults = async () => {
-    const response = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(searchTerm)}&retmode=json&retmax=100`);
+    const response = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(meshSearchTerm)}&retmode=json&retmax=100`);
     const data = await response.json();
     const ids = data.esearchresult.idlist;
     
@@ -65,16 +78,16 @@ const SearchResults = () => {
   };
 
   const { data: results, isLoading: isQueryLoading, isError, refetch } = useQuery({
-    queryKey: ['pubmedSearch', searchTerm],
+    queryKey: ['pubmedSearch', meshSearchTerm],
     queryFn: fetchPubMedResults,
     enabled: false,
   });
 
-  React.useEffect(() => {
-    if (location.state?.performSearch) {
+  useEffect(() => {
+    if (location.state?.performSearch && meshSearchTerm) {
       refetch();
     }
-  }, [location.state, refetch]);
+  }, [location.state, refetch, meshSearchTerm]);
 
   const handleResultSelection = (uid) => {
     setSelectedResults(prev => 
@@ -211,6 +224,23 @@ const SearchResults = () => {
           <Button type="submit">Search</Button>
         </div>
       </form>
+      {isMeshLoading ? (
+        <p>Converting to MeSH terms...</p>
+      ) : meshCombinations.length > 0 ? (
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold mb-2">MeSH Term Combinations:</h3>
+          <Select value={meshSearchTerm} onValueChange={setMeshSearchTerm}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select MeSH combination" />
+            </SelectTrigger>
+            <SelectContent>
+              {meshCombinations.map((combo, index) => (
+                <SelectItem key={index} value={combo}>{combo}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      ) : null}
 
       <div className="flex gap-4">
         {/* Filters Column */}
