@@ -21,7 +21,6 @@ const Search = () => {
   const [numReferences, setNumReferences] = useState('');
 
   useEffect(() => {
-    // Autopopulate project title from previous page
     const params = new URLSearchParams(location.search);
     const title = params.get('projectTitle');
     if (title) {
@@ -35,6 +34,10 @@ const Search = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
+    if (parseInt(numReferences) >= 30) {
+      alert("Number of references must be less than 30");
+      return;
+    }
     const projectInfo = {
       projectTitle,
       firstName,
@@ -128,12 +131,16 @@ const Search = () => {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label htmlFor="numParagraphs">Number of Paragraphs</Label>
-            <Input
-              id="numParagraphs"
-              type="number"
-              value={numParagraphs}
-              onChange={(e) => setNumParagraphs(e.target.value)}
-            />
+            <Select value={numParagraphs} onValueChange={setNumParagraphs}>
+              <SelectTrigger id="numParagraphs">
+                <SelectValue placeholder="Select number of paragraphs" />
+              </SelectTrigger>
+              <SelectContent>
+                {[1, 2, 3, 4, 5].map((num) => (
+                  <SelectItem key={num} value={num.toString()}>{num}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label htmlFor="numReferences">Number of References</Label>
@@ -142,6 +149,8 @@ const Search = () => {
               type="number"
               value={numReferences}
               onChange={(e) => setNumReferences(e.target.value)}
+              min="1"
+              max="29"
             />
           </div>
         </div>

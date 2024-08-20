@@ -148,7 +148,14 @@ const SearchResults = () => {
           model: 'gpt-4',
           messages: [
             { role: 'system', content: 'You are a helpful assistant that analyzes scientific abstracts and identifies recurring themes.' },
-            { role: 'user', content: `Analyze the following abstracts and identify the top 5 recurring themes:\n\n${articlesData.map(article => `Title: ${article.title}\nAbstract: ${article.abstract}\n\n`).join('')}` }
+            { role: 'user', content: `Analyze the following abstracts and identify the top 5 recurring themes. Also, consider the following project information:
+              Project Title: ${projectInfo.projectTitle}
+              Project Type: ${projectInfo.projectType}
+              Number of Paragraphs: ${projectInfo.numParagraphs}
+              Number of References: ${projectInfo.numReferences}
+
+              Abstracts:
+              ${articlesData.map(article => `Title: ${article.title}\nAbstract: ${article.abstract}\n\n`).join('')}` }
           ]
         })
       });
