@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { X, ChevronDown, ChevronUp, Save, Download, ArrowLeft } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useLocation, useNavigate } from 'react-router-dom';
-import { X, ChevronDown, ChevronUp, Save, Download, ArrowLeft } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -26,62 +26,68 @@ const SearchResults = () => {
   const projectInfo = location.state?.projectInfo || {};
 
   const [selectedResults, setSelectedResults] = useState([]);
-  const [yearFilter, setYearFilter] = useState('');
-  const [authorFilter, setAuthorFilter] = useState('');
-  const [savedResults, setSavedResults] = useState([]);
+  const [filters, setFilters] = useState({
+    year: '',
+    author: '',
+    textAvailability: '',
+    articleType: '',
+    publicationDate: '',
+  });
+  const [savedResults, setSavedResults] = useState(() => {
+    const saved = localStorage.getItem('savedResults');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
-  const [textAvailability, setTextAvailability] = useState('');
-  const [articleType, setArticleType] = useState('');
-  const [publicationDate, setPublicationDate] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [meshSearchTerm, setMeshSearchTerm] = useState('');
 
   const { data: meshTerms, isLoading: isMeshLoading, error: meshError } = useMeshTerms(searchTerm);
-  const [meshCombinations, setMeshCombinations] = useState([]);
 
-  useEffect(() => {
+  const meshCombinations = useMemo(() => {
     if (meshTerms && meshTerms.length > 0) {
-      const combinations = generateMeshCombinations(meshTerms);
-      setMeshCombinations(combinations);
-      setMeshSearchTerm(combinations[0] || searchTerm);
-    } else {
-      setMeshCombinations([searchTerm]);
-      setMeshSearchTerm(searchTerm);
+      return generateMeshCombinations(meshTerms);
     }
+    return [searchTerm];
   }, [meshTerms, searchTerm]);
 
-  const resetFilters = () => {
-    setYearFilter('');
-    setAuthorFilter('');
-    setTextAvailability('');
-    setArticleType('');
-    setPublicationDate('');
-  };
+  useEffect(() => {
+    setMeshSearchTerm(meshCombinations[0] || searchTerm);
+  }, [meshCombinations, searchTerm]);
 
-  const handleBack = () => {
+  const resetFilters = useCallback(() => {
+    setFilters({
+      year: '',
+      author: '',
+      textAvailability: '',
+      articleType: '',
+      publicationDate: '',
+    });
+  }, []);
+
+  const handleBack = useCallback(() => {
     navigate(-1);
-  };
+  }, [navigate]);
 
-  const handleSearch = (e) => {
+  const handleSearch = useCallback((e) => {
     e.preventDefault();
     // Implement search functionality here
-  };
+  }, []);
 
-  const handleSaveResults = () => {
-    setSavedResults(selectedResults);
-    localStorage.setItem('savedResults', JSON.stringify(selectedResults));
-  };
+  const handleSaveResults = useCallback(() => {
+    const updatedResults = [...savedResults, ...selectedResults];
+    setSavedResults(updatedResults);
+    localStorage.setItem('savedResults', JSON.stringify(updatedResults));
+  }, [savedResults, selectedResults]);
 
-  const handleDownloadResults = () => {
+  const handleDownloadResults = useCallback(() => {
     // Implement download functionality here
-  };
+  }, []);
 
-  const handleNextStep = () => {
+  const handleNextStep = useCallback(() => {
     navigate('/theme-analysis', { state: { themes: savedResults.map(result => result.title).join('\n') } });
-  };
+  }, [navigate, savedResults]);
 
   const { data: searchResults, isLoading: isSearchLoading, error: searchError } = useQuery({
-    queryKey: ['pubmedSearch', meshSearchTerm],
+    queryKey: ['pubmedSearch', meshSearchTerm, filters],
     queryFn: async () => {
       // Implement the actual PubMed API call here
       // This is a placeholder implementation
@@ -94,9 +100,26 @@ const SearchResults = () => {
     enabled: !!meshSearchTerm,
   });
 
+  const filteredResults = useMemo(() => {
+    if (!searchResults) return [];
+    return searchResults.filter(result => {
+      return (
+        (!filters.year || result.year === filters.year) &&
+        (!filters.author || result.authors.some(author => author.toLowerCase().includes(filters.author.toLowerCase())))
+        // Add more filter conditions here
+      );
+    });
+  }, [searchResults, filters]);
+
+  const handleFilterChange = useCallback((key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  }, []);
+
   return (
     <div className="container mx-auto p-4">
-      <LoadingOverlay isLoading={isLoading || isSearchLoading} message="Searching PubMed..." />
+      <LoadingOverlay isLoading={isSearchLoading} message="Searching PubMed..." />
+      
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center">
           <Button variant="ghost" size="icon" onClick={handleBack} className="mr-2">
@@ -115,6 +138,7 @@ const SearchResults = () => {
         </div>
       </div>
 
+      {/* Search Form */}
       <form onSubmit={handleSearch} className="mb-6">
         <div className="flex gap-2">
           <Input
@@ -128,6 +152,7 @@ const SearchResults = () => {
         </div>
       </form>
 
+      {/* MeSH Terms Section */}
       {isMeshLoading ? (
         <p>Converting to MeSH terms...</p>
       ) : meshError ? (
@@ -151,10 +176,11 @@ const SearchResults = () => {
       )}
 
       <div className="flex gap-4">
+        {/* Filters */}
         <div className="w-1/4">
           <h2 className="text-xl font-semibold mb-4">Filters</h2>
           <div className="space-y-4">
-            <Select value={yearFilter} onValueChange={setYearFilter}>
+            <Select value={filters.year} onValueChange={(value) => handleFilterChange('year', value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Filter by Year" />
               </SelectTrigger>
@@ -167,50 +193,17 @@ const SearchResults = () => {
 
             <Input
               placeholder="Filter by Author"
-              value={authorFilter}
-              onChange={(e) => setAuthorFilter(e.target.value)}
+              value={filters.author}
+              onChange={(e) => handleFilterChange('author', e.target.value)}
             />
 
-            <Select value={textAvailability} onValueChange={setTextAvailability}>
-              <SelectTrigger>
-                <SelectValue placeholder="Text Availability" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="abstract">Abstract</SelectItem>
-                <SelectItem value="free_full_text">Free Full Text</SelectItem>
-                <SelectItem value="full_text">Full Text</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={articleType} onValueChange={setArticleType}>
-              <SelectTrigger>
-                <SelectValue placeholder="Article Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Books and Documents">Books and Documents</SelectItem>
-                <SelectItem value="Clinical Trial">Clinical Trial</SelectItem>
-                <SelectItem value="Meta-Analysis">Meta-Analysis</SelectItem>
-                <SelectItem value="Randomized Controlled Trial">Randomized Controlled Trial</SelectItem>
-                <SelectItem value="Review">Review</SelectItem>
-                <SelectItem value="Systematic Review">Systematic Review</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={publicationDate} onValueChange={setPublicationDate}>
-              <SelectTrigger>
-                <SelectValue placeholder="Publication Date" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1_year">1 year</SelectItem>
-                <SelectItem value="5_years">5 years</SelectItem>
-                <SelectItem value="10_years">10 years</SelectItem>
-              </SelectContent>
-            </Select>
+            {/* Add more filter components here */}
 
             <Button onClick={resetFilters} className="w-full">Reset Filters</Button>
           </div>
         </div>
 
+        {/* Search Results */}
         <div className="w-3/4">
           <h2 className="text-xl font-semibold mb-4">Search Results</h2>
           {searchError ? (
@@ -226,7 +219,7 @@ const SearchResults = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {searchResults?.map((result) => (
+                {filteredResults.map((result) => (
                   <TableRow key={result.id}>
                     <TableCell>
                       <Checkbox
@@ -251,6 +244,7 @@ const SearchResults = () => {
         </div>
       </div>
 
+      {/* Saved Results */}
       {savedResults.length > 0 && (
         <Card className="mt-6">
           <CardHeader>
@@ -267,14 +261,14 @@ const SearchResults = () => {
           </CardHeader>
           {isTimelineExpanded && (
             <CardContent>
-              {savedResults.map((result, index) => (
+              {savedResults.map((result) => (
                 <div key={result.id} className="flex items-center justify-between mb-2">
                   <span>{result.title}</span>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => {
-                      setSavedResults(savedResults.filter(r => r.id !== result.id));
+                      setSavedResults(prev => prev.filter(r => r.id !== result.id));
                     }}
                   >
                     <X className="h-4 w-4" />
