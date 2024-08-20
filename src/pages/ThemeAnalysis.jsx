@@ -15,7 +15,15 @@ const ThemeAnalysis = () => {
   const [newTheme, setNewTheme] = useState('');
   const [newThemeRating, setNewThemeRating] = useState(5);
   const [isLoading, setIsLoading] = useState(false);
-  const [loadingStep, setLoadingStep] = useState('');
+  const [loadingSteps, setLoadingSteps] = useState([
+    { name: 'Hybrid Retrieval-Generation Models', progress: 0 },
+    { name: 'Knowledge-Enhanced Text Generation', progress: 0 },
+    { name: 'Memory-Augmented Neural Networks (MANNs)', progress: 0 },
+    { name: 'Attention Mechanisms', progress: 0 },
+    { name: 'Content Extraction', progress: 0 },
+    { name: 'Draft Generation', progress: 0 },
+    { name: 'Final Refinement', progress: 0 }
+  ]);
   const [pdfs, setPdfs] = useState([]);
 
   const handleBack = () => {
@@ -37,7 +45,6 @@ const ThemeAnalysis = () => {
   };
 
   const retrievePDFs = async (savedResults) => {
-    setLoadingStep('Retrieving PDFs');
     // Simulating PDF retrieval
     const retrievedPDFs = await Promise.all(savedResults.map(async (result) => {
       // In a real scenario, you would fetch the actual PDF content here
@@ -46,12 +53,28 @@ const ThemeAnalysis = () => {
     setPdfs(retrievedPDFs);
   };
 
-  const runREALM = async (pdfs) => {
-    setLoadingStep('Running REALM');
-    // Simulating REALM processing
-    // In a real scenario, you would integrate with a REALM implementation
-    await new Promise(resolve => setTimeout(resolve, 3000)); // Simulating processing time
-    console.log('REALM processing completed');
+  const runHybridRetrievalGenerationModels = async (pdfs) => {
+    // Simulating the Hybrid Retrieval-Generation Models process
+    for (let i = 0; i <= 100; i += 10) {
+      await new Promise(resolve => setTimeout(resolve, 200));
+      setLoadingSteps(prevSteps => prevSteps.map(step => 
+        step.name === 'Hybrid Retrieval-Generation Models' ? { ...step, progress: i } : step
+      ));
+    }
+    // In a real scenario, you would process the PDFs and generate initial content here
+    console.log('Hybrid Retrieval-Generation Models completed');
+  };
+
+  const runKnowBERT = async () => {
+    // Simulating the KnowBERT process
+    for (let i = 0; i <= 100; i += 10) {
+      await new Promise(resolve => setTimeout(resolve, 200));
+      setLoadingSteps(prevSteps => prevSteps.map(step => 
+        step.name === 'Knowledge-Enhanced Text Generation' ? { ...step, progress: i } : step
+      ));
+    }
+    // In a real scenario, you would use KnowBERT to enhance the text with knowledge and citations
+    console.log('KnowBERT processing completed');
   };
 
   const handleNextStep = async () => {
@@ -59,9 +82,10 @@ const ThemeAnalysis = () => {
     try {
       const savedResults = JSON.parse(localStorage.getItem('savedResults') || '[]');
       await retrievePDFs(savedResults);
-      await runREALM(pdfs);
+      await runHybridRetrievalGenerationModels(pdfs);
+      await runKnowBERT();
 
-      // Generate introduction draft using OpenAI (placeholder for now)
+      // Generate introduction draft (placeholder for now)
       const introductionDraft = "This is a placeholder for the generated introduction draft.";
 
       navigate('/introduction-draft', { state: { introductionDraft } });
@@ -75,7 +99,7 @@ const ThemeAnalysis = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <LoadingOverlay isLoading={isLoading} message={loadingStep} />
+      <LoadingOverlay isLoading={isLoading} message="Processing themes and generating content" steps={loadingSteps} />
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center">
           <Button variant="ghost" size="icon" onClick={handleBack} className="mr-2">
