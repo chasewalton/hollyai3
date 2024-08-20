@@ -31,6 +31,7 @@ const Home = () => {
       const updatedProjects = [...projects, newProject];
       setProjects(updatedProjects);
       localStorage.setItem('projects', JSON.stringify(updatedProjects));
+      localStorage.removeItem('savedResults'); // Clear saved results
       setNewProjectName('');
       navigate('/search', { state: { projectTitle: newProjectName.trim() } });
     } else {
