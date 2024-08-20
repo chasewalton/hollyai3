@@ -6,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLocation, useNavigate } from 'react-router-dom';
-import { X, ChevronDown, ChevronUp, Save, Download } from 'lucide-react';
+import { X, ChevronDown, ChevronUp, Save, Download, ArrowLeft } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -22,6 +22,10 @@ const SearchResults = () => {
   const navigate = useNavigate();
   const initialSearchTerm = new URLSearchParams(location.search).get('query') || '';
   const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
+
+  const handleBack = () => {
+    navigate(-1);
+  };
   const [selectedResults, setSelectedResults] = useState([]);
   const [yearFilter, setYearFilter] = useState('');
   const [authorFilter, setAuthorFilter] = useState('');
@@ -166,7 +170,12 @@ const SearchResults = () => {
     <div className="container mx-auto p-4">
       <LoadingOverlay isLoading={isLoading} />
       <div className="mb-6 flex justify-between items-center">
-        <h1 className="text-3xl font-bold">PubMed Search</h1>
+        <div className="flex items-center">
+          <Button variant="ghost" size="icon" onClick={handleBack} className="mr-2">
+            <ArrowLeft className="h-6 w-6" />
+          </Button>
+          <h1 className="text-3xl font-bold">PubMed Search</h1>
+        </div>
         <Button size="lg" onClick={handleNextStep}>Next Step</Button>
       </div>
 

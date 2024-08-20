@@ -1,13 +1,19 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { PlusCircle, Upload } from "lucide-react";
+import { PlusCircle, Upload, ArrowLeft } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { Input } from "@/components/ui/input";
 
 const Home = () => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState([
+
+  const handleBack = () => {
+    // Since this is the home page, we might not want to navigate back
+    // You can customize this behavior as needed
+    console.log("Back button clicked on home page");
+  };
     { id: 1, name: "Project A", lastEdited: "2023-04-15" },
     { id: 2, name: "Project B", lastEdited: "2023-04-10" },
     { id: 3, name: "Project C", lastEdited: "2023-04-05" },
@@ -31,7 +37,12 @@ const Home = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-4xl font-bold mb-6">Welcome to Holly</h1>
+      <div className="flex items-center mb-6">
+        <Button variant="ghost" size="icon" onClick={handleBack} className="mr-2">
+          <ArrowLeft className="h-6 w-6" />
+        </Button>
+        <h1 className="text-4xl font-bold">Welcome to Holly</h1>
+      </div>
       <div className="flex flex-col md:flex-row gap-6">
         <div className="w-full md:w-1/2">
           <h2 className="text-2xl font-semibold mb-4">Start New Project</h2>

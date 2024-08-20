@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from 'lucide-react';
 
 const IntroductionDraft = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [introductionDraft, setIntroductionDraft] = useState('');
   const [steps, setSteps] = useState([
+
+  const handleBack = () => {
+    navigate(-1);
+  };
     { name: 'Hybrid Retrieval-Generation Models', progress: 0, description: 'Retrieving relevant information from PDFs and generating initial content.' },
     { name: 'Knowledge-Enhanced Text Generation', progress: 0, description: 'Using extracted knowledge to generate factually accurate text with in-line citations.' },
     { name: 'Memory-Augmented Neural Networks (MANNs)', progress: 0, description: 'Storing and accessing information from multiple PDFs to effectively combine information from different sources.' },
@@ -42,7 +49,12 @@ const IntroductionDraft = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">Introduction Draft</h1>
+      <div className="flex items-center mb-6">
+        <Button variant="ghost" size="icon" onClick={handleBack} className="mr-2">
+          <ArrowLeft className="h-6 w-6" />
+        </Button>
+        <h1 className="text-3xl font-bold">Introduction Draft</h1>
+      </div>
       <div className="flex gap-6">
         <div className="w-1/2">
           <Card>

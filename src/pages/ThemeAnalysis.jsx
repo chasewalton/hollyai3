@@ -5,12 +5,17 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import LoadingOverlay from '@/components/LoadingOverlay';
+import { ArrowLeft } from 'lucide-react';
 
 const ThemeAnalysis = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const initialThemes = location.state?.themes ? location.state.themes.split('\n').filter(theme => theme.trim() !== '') : [];
   const [themes, setThemes] = useState(initialThemes.map(theme => ({ text: theme, rating: 5 })));
+
+  const handleBack = () => {
+    navigate(-1);
+  };
   const [newTheme, setNewTheme] = useState('');
   const [newThemeRating, setNewThemeRating] = useState(5);
   const [isLoading, setIsLoading] = useState(false);
@@ -101,7 +106,12 @@ const ThemeAnalysis = () => {
     <div className="container mx-auto p-4">
       <LoadingOverlay isLoading={isLoading} />
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Theme Analysis</h1>
+        <div className="flex items-center">
+          <Button variant="ghost" size="icon" onClick={handleBack} className="mr-2">
+            <ArrowLeft className="h-6 w-6" />
+          </Button>
+          <h1 className="text-3xl font-bold">Theme Analysis</h1>
+        </div>
         <Button onClick={handleNextStep}>Next Step</Button>
       </div>
       <Card className="mb-6">
