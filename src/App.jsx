@@ -5,7 +5,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { navItems } from "./nav-items";
 import Navigation from "./components/Navigation";
 import SearchResults from "./pages/SearchResults";
-import ThemeAnalysis from "./pages/ThemeAnalysis";
+import ThemeAnalysis from "./pages/ThemeAnalysis.jsx";
 
 const queryClient = new QueryClient();
 
