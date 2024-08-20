@@ -14,6 +14,7 @@ const fetchWithRetry = async (url, retries = 3) => {
       }
       return await response.json();
     } catch (error) {
+      console.error(`Attempt ${i + 1} failed:`, error);
       if (i === retries - 1) throw error;
       await delay(1000); // Wait for 1 second before retrying
     }
@@ -22,21 +23,26 @@ const fetchWithRetry = async (url, retries = 3) => {
 
 const fetchMeshTerms = async (searchTerm) => {
   try {
+    console.log('Fetching MeSH terms for:', searchTerm);
     const searchUrl = `${BASE_URL}esearch.fcgi?db=mesh&term=${encodeURIComponent(searchTerm)}&retmode=json&api_key=${API_KEY}`;
     const data = await fetchWithRetry(searchUrl);
+    console.log('Search response:', data);
     
     const meshIds = data.esearchresult.idlist;
     if (meshIds.length === 0) {
+      console.log('No MeSH terms found');
       return [];
     }
     
     const summaryUrl = `${BASE_URL}esummary.fcgi?db=mesh&id=${meshIds.join(',')}&retmode=json&api_key=${API_KEY}`;
     const meshData = await fetchWithRetry(summaryUrl);
+    console.log('Summary response:', meshData);
     
     const meshTerms = Object.values(meshData.result)
       .filter(item => item.uid)
       .map(item => item.name);
     
+    console.log('Extracted MeSH terms:', meshTerms);
     return meshTerms;
   } catch (error) {
     console.error('Error fetching MeSH terms:', error);

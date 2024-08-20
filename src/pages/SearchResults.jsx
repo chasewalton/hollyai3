@@ -44,7 +44,7 @@ const SearchResults = () => {
   const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
   const [selectedMeshTerms, setSelectedMeshTerms] = useState([]);
 
-  const { data: meshTerms, isLoading: isMeshLoading, error: meshError } = useMeshTerms(searchTerm);
+  const { data: meshTerms, isLoading: isMeshLoading, error: meshError, refetch: refetchMeshTerms } = useMeshTerms(searchTerm);
 
   const meshCombinations = useMemo(() => {
     if (meshTerms && meshTerms.length > 0) {
@@ -74,22 +74,33 @@ const SearchResults = () => {
   }, [navigate]);
 
   const fetchPubMedResults = async () => {
-    const searchUrl = `${BASE_URL}esearch.fcgi?db=pubmed&term=${encodeURIComponent(meshSearchTerm)}&retmode=json&retmax=100&api_key=${API_KEY}`;
-    const searchResponse = await fetch(searchUrl);
-    const searchData = await searchResponse.json();
-    const ids = searchData.esearchresult.idlist;
-    
-    const summaryUrl = `${BASE_URL}esummary.fcgi?db=pubmed&id=${ids.join(',')}&retmode=json&api_key=${API_KEY}`;
-    const summaryResponse = await fetch(summaryUrl);
-    const summaryData = await summaryResponse.json();
-    
-    return Object.values(summaryData.result).filter(item => item.uid).map(item => ({
-      id: item.uid,
-      title: item.title,
-      authors: item.authors.map(author => author.name),
-      year: item.pubdate.split(' ')[0],
-      uid: item.uid
-    }));
+    try {
+      const searchUrl = `${BASE_URL}esearch.fcgi?db=pubmed&term=${encodeURIComponent(meshSearchTerm)}&retmode=json&retmax=100&api_key=${API_KEY}`;
+      const searchResponse = await fetch(searchUrl);
+      if (!searchResponse.ok) {
+        throw new Error(`HTTP error! status: ${searchResponse.status}`);
+      }
+      const searchData = await searchResponse.json();
+      const ids = searchData.esearchresult.idlist;
+      
+      const summaryUrl = `${BASE_URL}esummary.fcgi?db=pubmed&id=${ids.join(',')}&retmode=json&api_key=${API_KEY}`;
+      const summaryResponse = await fetch(summaryUrl);
+      if (!summaryResponse.ok) {
+        throw new Error(`HTTP error! status: ${summaryResponse.status}`);
+      }
+      const summaryData = await summaryResponse.json();
+      
+      return Object.values(summaryData.result).filter(item => item.uid).map(item => ({
+        id: item.uid,
+        title: item.title,
+        authors: item.authors.map(author => author.name),
+        year: item.pubdate.split(' ')[0],
+        uid: item.uid
+      }));
+    } catch (error) {
+      console.error('Error fetching PubMed results:', error);
+      throw error;
+    }
   };
 
   const { data: searchResults, isLoading: isSearchLoading, error: searchError, refetch } = useQuery({
@@ -101,7 +112,8 @@ const SearchResults = () => {
   const handleSearch = useCallback((e) => {
     e.preventDefault();
     refetch();
-  }, [refetch]);
+    refetchMeshTerms();
+  }, [refetch, refetchMeshTerms]);
 
   const handleSaveResults = useCallback(() => {
     const updatedResults = [...savedResults, ...selectedResults];
@@ -286,7 +298,16 @@ const SearchResults = () => {
             </Button>
           </div>
           {searchError ? (
-            <p>Error fetching search results: {searchError.message}</p>
+            <Alert variant="destructive">
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>Error fetching search results: {searchError.message}</AlertDescription>
+            </Alert>
+          ) : isSearchLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+            </div>
           ) : (
             <Table>
               <TableHeader>
