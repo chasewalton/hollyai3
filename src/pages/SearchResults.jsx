@@ -146,28 +146,76 @@ const SearchResults = () => {
         </div>
       </form>
 
-      {/* MeSH Terms Section */}
-      {isMeshLoading ? (
-        <p>Converting to MeSH terms...</p>
-      ) : meshError ? (
-        <p>Error converting to MeSH terms: {meshError.message}</p>
-      ) : meshCombinations.length > 0 ? (
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold mb-2">MeSH Term Combinations:</h3>
-          <Select value={meshSearchTerm} onValueChange={setMeshSearchTerm}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select MeSH combination" />
-            </SelectTrigger>
-            <SelectContent>
-              {meshCombinations.map((combo, index) => (
-                <SelectItem key={index} value={combo}>{combo}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      ) : (
-        <p>No MeSH terms found. Using original search term.</p>
-      )}
+      import React from 'react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const MeshTermsSection = ({ 
+  isMeshLoading, 
+  meshError, 
+  meshCombinations, 
+  meshSearchTerm, 
+  setMeshSearchTerm, 
+  originalSearchTerm 
+}) => {
+  if (isMeshLoading) {
+    return (
+      <div className="mb-4 space-y-2">
+        <Skeleton className="h-4 w-2/3" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+    );
+  }
+
+  if (meshError) {
+    return (
+      <Alert variant="destructive" className="mb-4">
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>
+          Failed to convert to MeSH terms: {meshError.message}. Using original search term.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (meshCombinations.length === 0) {
+    return (
+      <Alert className="mb-4">
+        <AlertTitle>No MeSH Terms Found</AlertTitle>
+        <AlertDescription>
+          No MeSH terms were found for "{originalSearchTerm}". Your search will use the original term.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  return (
+    <div className="mb-4">
+      <h3 className="text-lg font-semibold mb-2">MeSH Term Combinations:</h3>
+      <Select 
+        value={meshSearchTerm} 
+        onValueChange={setMeshSearchTerm}
+      >
+        <SelectTrigger>
+          <SelectValue placeholder="Select MeSH combination" />
+        </SelectTrigger>
+        <SelectContent>
+          {meshCombinations.map((combo, index) => (
+            <SelectItem key={index} value={combo}>
+              {combo}
+            </SelectItem>
+          ))}
+          <SelectItem value={originalSearchTerm}>
+            Original: {originalSearchTerm}
+          </SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  );
+};
+
+export default MeshTermsSection;
 
       <div className="flex gap-4">
         {/* Filters */}
