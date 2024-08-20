@@ -54,7 +54,6 @@ const ThemeAnalysis = () => {
   };
 
   const runHybridRetrievalGenerationModels = async (pdfs) => {
-    // Simulating the Hybrid Retrieval-Generation Models process
     for (let i = 0; i <= 100; i += 10) {
       await new Promise(resolve => setTimeout(resolve, 200));
       setLoadingSteps(prevSteps => prevSteps.map(step => 
@@ -63,10 +62,10 @@ const ThemeAnalysis = () => {
     }
     // In a real scenario, you would process the PDFs and generate initial content here
     console.log('Hybrid Retrieval-Generation Models completed');
+    return 'Initial content generated from PDFs';
   };
 
-  const runKnowBERT = async () => {
-    // Simulating the KnowBERT process
+  const runKnowBERT = async (initialContent) => {
     for (let i = 0; i <= 100; i += 10) {
       await new Promise(resolve => setTimeout(resolve, 200));
       setLoadingSteps(prevSteps => prevSteps.map(step => 
@@ -75,6 +74,19 @@ const ThemeAnalysis = () => {
     }
     // In a real scenario, you would use KnowBERT to enhance the text with knowledge and citations
     console.log('KnowBERT processing completed');
+    return 'Enhanced content with factual accuracy and citations';
+  };
+
+  const runMANNs = async (enhancedContent) => {
+    for (let i = 0; i <= 100; i += 10) {
+      await new Promise(resolve => setTimeout(resolve, 200));
+      setLoadingSteps(prevSteps => prevSteps.map(step => 
+        step.name === 'Memory-Augmented Neural Networks (MANNs)' ? { ...step, progress: i } : step
+      ));
+    }
+    // In a real scenario, you would use MANNs to combine information from multiple sources
+    console.log('MANNs processing completed');
+    return 'Unified content with information from multiple sources';
   };
 
   const handleNextStep = async () => {
@@ -82,11 +94,13 @@ const ThemeAnalysis = () => {
     try {
       const savedResults = JSON.parse(localStorage.getItem('savedResults') || '[]');
       await retrievePDFs(savedResults);
-      await runHybridRetrievalGenerationModels(pdfs);
-      await runKnowBERT();
+      
+      const initialContent = await runHybridRetrievalGenerationModels(pdfs);
+      const enhancedContent = await runKnowBERT(initialContent);
+      const unifiedContent = await runMANNs(enhancedContent);
 
       // Generate introduction draft (placeholder for now)
-      const introductionDraft = "This is a placeholder for the generated introduction draft.";
+      const introductionDraft = "This is a placeholder for the generated introduction draft based on the unified content.";
 
       navigate('/introduction-draft', { state: { introductionDraft } });
     } catch (error) {
