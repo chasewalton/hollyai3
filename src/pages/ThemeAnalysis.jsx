@@ -63,6 +63,40 @@ const ThemeAnalysis = () => {
     }
   };
 
+  const handleGenerateAdditionalTheme = async () => {
+    setIsLoading(true);
+    try {
+      const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer sk-svcacct-dALVXu6jJh-OP43b-fHTG6DGJNHALbST0gDrnpAoQfqqKVlmssgnlT3BlbkFJ0rb1xLB-W1zvuGuYjujubIxT20SMUbiMkYY2ib7lqwW-5AlLtQPXgA'
+        },
+        body: JSON.stringify({
+          model: 'gpt-4',
+          messages: [
+            { role: 'system', content: 'You are a helpful assistant that analyzes research themes and generates additional relevant themes.' },
+            { role: 'user', content: `Based on the following themes, generate one additional theme that is relevant but not redundant:\n\n${themes.map(theme => theme.text).join('\n')}` }
+          ]
+        })
+      });
+
+      if (!openAIResponse.ok) {
+        throw new Error('Failed to get response from OpenAI');
+      }
+
+      const themeData = await openAIResponse.json();
+      const newGeneratedTheme = themeData.choices[0].message.content.trim();
+      
+      setThemes([...themes, { text: newGeneratedTheme, rating: 5 }]);
+    } catch (error) {
+      console.error('Error generating additional theme:', error);
+      alert('An error occurred while generating an additional theme. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="container mx-auto p-4">
       <LoadingOverlay isLoading={isLoading} />
@@ -97,6 +131,7 @@ const ThemeAnalysis = () => {
           )}
         </CardContent>
       </Card>
+      <Button onClick={handleGenerateAdditionalTheme} className="w-full mb-6">Generate Additional Theme</Button>
       <Card>
         <CardHeader>
           <CardTitle>Add Custom Theme</CardTitle>
