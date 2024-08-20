@@ -24,28 +24,25 @@ const IntroductionDraft = () => {
   };
 
   useEffect(() => {
-    const simulateProgress = () => {
-      setSteps(prevSteps => 
-        prevSteps.map((step, index) => {
-          if (step.progress < 100) {
-            return { ...step, progress: Math.min(step.progress + Math.random() * 10, 100) };
-          }
-          return step;
-        })
-      );
+    const processSteps = async () => {
+      for (let i = 0; i < steps.length; i++) {
+        await processStep(i);
+      }
+      setIntroductionDraft(location.state?.introductionDraft || 'Introduction draft generated successfully.');
     };
 
-    const interval = setInterval(simulateProgress, 500);
-
-    // Simulating the completion of the process
-    setTimeout(() => {
-      clearInterval(interval);
-      setSteps(prevSteps => prevSteps.map(step => ({ ...step, progress: 100 })));
-      setIntroductionDraft(location.state?.introductionDraft || 'No introduction draft available.');
-    }, 10000);
-
-    return () => clearInterval(interval);
+    processSteps();
   }, [location.state?.introductionDraft]);
+
+  const processStep = async (stepIndex) => {
+    const totalIterations = 10;
+    for (let i = 0; i <= totalIterations; i++) {
+      await new Promise(resolve => setTimeout(resolve, 500)); // Simulating work being done
+      setSteps(prevSteps => prevSteps.map((step, index) => 
+        index === stepIndex ? { ...step, progress: (i / totalIterations) * 100 } : step
+      ));
+    }
+  };
 
   return (
     <div className="container mx-auto p-4">
