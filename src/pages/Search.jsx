@@ -8,11 +8,11 @@ const Search = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
 
-  const handleSearch = (e) => {
-
   const handleBack = () => {
     navigate(-1);
   };
+
+  const handleSearch = (e) => {
     e.preventDefault();
     navigate(`/search-results?query=${encodeURIComponent(searchTerm)}`);
   };
