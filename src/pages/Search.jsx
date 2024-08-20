@@ -151,9 +151,11 @@ const Search = () => {
               max="29"
             />
           </div>
+        </div>
+
         <div className="flex justify-center mt-6">
-          <Button onClick={() => navigate('/search-results', { state: { projectInfo, performSearch: true } })}>
-          Go to Search
+          <Button type="submit">
+            Go to Search
           </Button>
         </div>
       </form>
