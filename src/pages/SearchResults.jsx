@@ -56,8 +56,8 @@ const SearchResults = () => {
   const meshSearchTerm = useMemo(() => {
     return selectedMeshTerms.length > 0
       ? selectedMeshTerms.join(' OR ')
-      : meshCombinations[0] || searchTerm;
-  }, [selectedMeshTerms, meshCombinations, searchTerm]);
+      : searchTerm;
+  }, [selectedMeshTerms, searchTerm]);
 
   const resetFilters = useCallback(() => {
     setFilters({
@@ -152,6 +152,12 @@ const SearchResults = () => {
     });
   }, []);
 
+  useEffect(() => {
+    if (meshCombinations.length > 0 && selectedMeshTerms.length === 0) {
+      setSelectedMeshTerms([meshCombinations[0]]);
+    }
+  }, [meshCombinations]);
+
   const MeshTermsSection = ({ 
     isMeshLoading, 
     meshError, 
@@ -203,7 +209,7 @@ const SearchResults = () => {
                 onCheckedChange={() => handleMeshTermSelection(combo)}
               />
               <label htmlFor={`mesh-${index}`} className="text-sm">
-                {combo || `No combination available`}
+                {combo}
               </label>
             </div>
           ))}
@@ -214,7 +220,7 @@ const SearchResults = () => {
               onCheckedChange={() => handleMeshTermSelection(originalSearchTerm)}
             />
             <label htmlFor="original-term" className="text-sm">
-              Original: {originalSearchTerm || 'No original term'}
+              Original: {originalSearchTerm}
             </label>
           </div>
         </div>
