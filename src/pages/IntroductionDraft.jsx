@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from 'lucide-react';
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { motion, AnimatePresence } from 'framer-motion';
 
 const IntroductionDraft = () => {
   const location = useLocation();
@@ -116,52 +117,68 @@ const IntroductionDraft = () => {
         </div>
       </div>
       <div className="flex gap-6">
-        <div className="w-1/2">
+        <AnimatePresence mode="wait">
           {!showFeedbackForm ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>Generation Process</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {steps.map((step, index) => (
-                  <div key={index} className="mb-4">
-                    <div className="flex justify-between mb-1">
-                      <span className="font-semibold">{step.name}</span>
-                      <span>{Math.round(step.progress)}%</span>
-                    </div>
-                    <Progress value={step.progress} className="mb-2" />
-                    <p className="text-sm text-gray-600">{step.description}</p>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle>What would you like to change?</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={(e) => { e.preventDefault(); handleSubmitFeedback(); }} className="space-y-4">
-                  {Object.entries(feedback).map(([key, value]) => (
-                    <div key={key}>
-                      <Label htmlFor={key} className="font-semibold">
-                        {key.split(/(?=[A-Z])/).join(' ')}:
-                      </Label>
-                      <Textarea
-                        id={key}
-                        name={key}
-                        value={value}
-                        onChange={handleFeedbackChange}
-                        placeholder={`Enter your feedback about ${key.split(/(?=[A-Z])/).join(' ').toLowerCase()}...`}
-                      />
+            <motion.div
+              key="loading"
+              initial={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.5 }}
+              className="w-1/2"
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle>Generation Process</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {steps.map((step, index) => (
+                    <div key={index} className="mb-4">
+                      <div className="flex justify-between mb-1">
+                        <span className="font-semibold">{step.name}</span>
+                        <span>{Math.round(step.progress)}%</span>
+                      </div>
+                      <Progress value={step.progress} className="mb-2" />
+                      <p className="text-sm text-gray-600">{step.description}</p>
                     </div>
                   ))}
-                  <Button type="submit" className="w-full">Submit Feedback</Button>
-                </form>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="feedback"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              transition={{ duration: 0.5 }}
+              className="w-1/2"
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle>What would you like to change?</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={(e) => { e.preventDefault(); handleSubmitFeedback(); }} className="space-y-4">
+                    {Object.entries(feedback).map(([key, value]) => (
+                      <div key={key}>
+                        <Label htmlFor={key} className="font-semibold">
+                          {key.split(/(?=[A-Z])/).join(' ')}:
+                        </Label>
+                        <Textarea
+                          id={key}
+                          name={key}
+                          value={value}
+                          onChange={handleFeedbackChange}
+                          placeholder={`Enter your feedback about ${key.split(/(?=[A-Z])/).join(' ').toLowerCase()}...`}
+                        />
+                      </div>
+                    ))}
+                    <Button type="submit" className="w-full">Submit Feedback</Button>
+                  </form>
+                </CardContent>
+              </Card>
+            </motion.div>
           )}
-        </div>
+        </AnimatePresence>
         <div className="w-1/2">
           <Card>
             <CardHeader>
