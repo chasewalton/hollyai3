@@ -53,7 +53,15 @@ const SearchResults = () => {
     }
   }, [meshTerms, searchTerm]);
 
-  // ... (rest of the component code remains the same)
+  const resetFilters = () => {
+    setYearFilter('');
+    setAuthorFilter('');
+    setTextAvailability('');
+    setArticleType('');
+    setPublicationDate('');
+  };
+
+  // ... (rest of the component code)
 
   return (
     <div className="container mx-auto p-4">
