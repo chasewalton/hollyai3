@@ -1,18 +1,29 @@
 import { useQuery } from '@tanstack/react-query';
 
 const fetchMeshTerms = async (searchTerm) => {
-  const response = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=mesh&term=${encodeURIComponent(searchTerm)}&retmode=json`);
-  const data = await response.json();
-  const meshIds = data.esearchresult.idlist;
+  try {
+    const response = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=mesh&term=${encodeURIComponent(searchTerm)}&retmode=json`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    const meshIds = data.esearchresult.idlist;
 
-  if (meshIds.length === 0) {
-    return [];
+    if (meshIds.length === 0) {
+      return [];
+    }
+
+    const meshResponse = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=mesh&id=${meshIds.join(',')}&retmode=json`);
+    if (!meshResponse.ok) {
+      throw new Error(`HTTP error! status: ${meshResponse.status}`);
+    }
+    const meshData = await meshResponse.json();
+    
+    return Object.values(meshData.result).filter(item => item.uid).map(item => item.name);
+  } catch (error) {
+    console.error('Error fetching MeSH terms:', error);
+    throw error;
   }
-
-  const meshResponse = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=mesh&id=${meshIds.join(',')}&retmode=json`);
-  const meshData = await meshResponse.json();
-  
-  return Object.values(meshData.result).filter(item => item.uid).map(item => item.name);
 };
 
 export const useMeshTerms = (searchTerm) => {

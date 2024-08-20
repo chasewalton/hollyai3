@@ -39,7 +39,7 @@ const SearchResults = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [meshSearchTerm, setMeshSearchTerm] = useState('');
 
-  const { data: meshTerms, isLoading: isMeshLoading } = useMeshTerms(searchTerm);
+  const { data: meshTerms, isLoading: isMeshLoading, error: meshError } = useMeshTerms(searchTerm);
   const [meshCombinations, setMeshCombinations] = useState([]);
 
   useEffect(() => {
@@ -47,8 +47,12 @@ const SearchResults = () => {
       const combinations = generateMeshCombinations(meshTerms);
       setMeshCombinations(combinations);
       setMeshSearchTerm(combinations[0]);
+    } else if (meshTerms && meshTerms.length === 0) {
+      // If no MeSH terms are found, use the original search term
+      setMeshCombinations([searchTerm]);
+      setMeshSearchTerm(searchTerm);
     }
-  }, [meshTerms]);
+  }, [meshTerms, searchTerm]);
 
   const handleSaveResults = () => {
     const newSavedResults = filteredResults.filter(result => selectedResults.includes(result.uid));
@@ -77,7 +81,7 @@ const SearchResults = () => {
     return Object.values(summaryData.result).filter(item => item.uid);
   };
 
-  const { data: results, isLoading: isQueryLoading, isError, refetch } = useQuery({
+  const { data: results, isLoading: isQueryLoading, isError, error, refetch } = useQuery({
     queryKey: ['pubmedSearch', meshSearchTerm],
     queryFn: fetchPubMedResults,
     enabled: false,
@@ -226,6 +230,8 @@ const SearchResults = () => {
       </form>
       {isMeshLoading ? (
         <p>Converting to MeSH terms...</p>
+      ) : meshError ? (
+        <p>Error converting to MeSH terms: {meshError.message}</p>
       ) : meshCombinations.length > 0 ? (
         <div className="mb-4">
           <h3 className="text-lg font-semibold mb-2">MeSH Term Combinations:</h3>
@@ -240,7 +246,9 @@ const SearchResults = () => {
             </SelectContent>
           </Select>
         </div>
-      ) : null}
+      ) : (
+        <p>No MeSH terms found. Using original search term.</p>
+      )}
 
       <div className="flex gap-4">
         {/* Filters Column */}
@@ -345,7 +353,7 @@ const SearchResults = () => {
             <Button onClick={handleDownloadPDFs}>Download PDFs</Button>
           </div>
           {isQueryLoading && <p>Loading...</p>}
-          {isError && <p>Error fetching results. Please try again.</p>}
+          {isError && <p>Error fetching results: {error?.message || 'Please try again.'}</p>}
 
           {filteredResults && (
             <div className="space-y-4">
