@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import {
   Table,
   TableBody,
@@ -31,11 +32,16 @@ const SearchResults = () => {
 
   const [selectedResults, setSelectedResults] = useState([]);
   const [filters, setFilters] = useState({
-    year: '',
-    author: '',
+    yearRange: [1900, new Date().getFullYear()],
+    authors: [],
     textAvailability: '',
-    articleType: '',
-    publicationDate: '',
+    articleTypes: [],
+    publicationDateRange: [new Date(1900, 0, 1), new Date()],
+    journalCategories: [],
+    citationCount: [0, 1000],
+    studyTypes: [],
+    languages: [],
+    subjectAreas: [],
   });
   const [savedResults, setSavedResults] = useState(() => {
     const saved = localStorage.getItem('savedResults');
@@ -46,11 +52,16 @@ const SearchResults = () => {
 
   const resetFilters = useCallback(() => {
     setFilters({
-      year: '',
-      author: '',
+      yearRange: [1900, new Date().getFullYear()],
+      authors: [],
       textAvailability: '',
-      articleType: '',
-      publicationDate: '',
+      articleTypes: [],
+      publicationDateRange: [new Date(1900, 0, 1), new Date()],
+      journalCategories: [],
+      citationCount: [0, 1000],
+      studyTypes: [],
+      languages: [],
+      subjectAreas: [],
     });
   }, []);
 
@@ -79,8 +90,11 @@ const SearchResults = () => {
         id: item.uid,
         title: item.title,
         authors: item.authors.map(author => author.name),
-        year: item.pubdate.split(' ')[0],
-        uid: item.uid
+        year: parseInt(item.pubdate.split(' ')[0]),
+        uid: item.uid,
+        articleType: item.pubtype[0] || 'Unknown',
+        language: item.lang[0] || 'Unknown',
+        journal: item.fulljournalname || 'Unknown',
       }));
     } catch (error) {
       console.error('Error fetching PubMed results:', error);
@@ -135,8 +149,11 @@ const SearchResults = () => {
     if (!searchResults) return [];
     return searchResults.filter(result => {
       return (
-        (!filters.year || result.year === filters.year) &&
-        (!filters.author || result.authors.some(author => author.toLowerCase().includes(filters.author.toLowerCase())))
+        (result.year >= filters.yearRange[0] && result.year <= filters.yearRange[1]) &&
+        (filters.authors.length === 0 || result.authors.some(author => filters.authors.includes(author))) &&
+        (filters.articleTypes.length === 0 || filters.articleTypes.includes(result.articleType)) &&
+        (filters.languages.length === 0 || filters.languages.includes(result.language))
+        // Add more filter conditions here as needed
       );
     });
   }, [searchResults, filters]);
@@ -181,22 +198,65 @@ const SearchResults = () => {
         <div className="w-1/4">
           <h2 className="text-xl font-semibold mb-4">Filters</h2>
           <div className="space-y-4">
-            <Select value={filters.year} onValueChange={(value) => handleFilterChange('year', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by Year" />
-              </SelectTrigger>
-              <SelectContent>
-                {['2024', '2023', '2022', '2021', '2020'].map(year => (
-                  <SelectItem key={year} value={year}>{year}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div>
+              <label className="block mb-2">Year Range</label>
+              <Slider
+                min={1900}
+                max={new Date().getFullYear()}
+                step={1}
+                value={filters.yearRange}
+                onValueChange={(value) => handleFilterChange('yearRange', value)}
+              />
+              <div className="flex justify-between mt-1">
+                <span>{filters.yearRange[0]}</span>
+                <span>{filters.yearRange[1]}</span>
+              </div>
+            </div>
 
-            <Input
-              placeholder="Filter by Author"
-              value={filters.author}
-              onChange={(e) => handleFilterChange('author', e.target.value)}
-            />
+            <div>
+              <label className="block mb-2">Authors</label>
+              <Select
+                isMulti
+                options={searchResults ? [...new Set(searchResults.flatMap(result => result.authors))].map(author => ({ value: author, label: author })) : []}
+                value={filters.authors.map(author => ({ value: author, label: author }))}
+                onChange={(selected) => handleFilterChange('authors', selected.map(item => item.value))}
+              />
+            </div>
+
+            <div>
+              <label className="block mb-2">Article Types</label>
+              <Select
+                isMulti
+                options={['Journal Article', 'Review', 'Clinical Trial', 'Meta-Analysis', 'Randomized Controlled Trial'].map(type => ({ value: type, label: type }))}
+                value={filters.articleTypes.map(type => ({ value: type, label: type }))}
+                onChange={(selected) => handleFilterChange('articleTypes', selected.map(item => item.value))}
+              />
+            </div>
+
+            <div>
+              <label className="block mb-2">Languages</label>
+              <Select
+                isMulti
+                options={['English', 'French', 'German', 'Spanish', 'Chinese'].map(lang => ({ value: lang, label: lang }))}
+                value={filters.languages.map(lang => ({ value: lang, label: lang }))}
+                onChange={(selected) => handleFilterChange('languages', selected.map(item => item.value))}
+              />
+            </div>
+
+            <div>
+              <label className="block mb-2">Citation Count</label>
+              <Slider
+                min={0}
+                max={1000}
+                step={10}
+                value={filters.citationCount}
+                onValueChange={(value) => handleFilterChange('citationCount', value)}
+              />
+              <div className="flex justify-between mt-1">
+                <span>{filters.citationCount[0]}</span>
+                <span>{filters.citationCount[1]}+</span>
+              </div>
+            </div>
 
             <Button onClick={resetFilters} className="w-full">Reset Filters</Button>
           </div>
@@ -231,6 +291,8 @@ const SearchResults = () => {
                   <TableHead>Title</TableHead>
                   <TableHead>Authors</TableHead>
                   <TableHead>Year</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Language</TableHead>
                   <TableHead>Link</TableHead>
                 </TableRow>
               </TableHeader>
@@ -252,6 +314,8 @@ const SearchResults = () => {
                     <TableCell>{result.title}</TableCell>
                     <TableCell>{result.authors.join(', ')}</TableCell>
                     <TableCell>{result.year}</TableCell>
+                    <TableCell>{result.articleType}</TableCell>
+                    <TableCell>{result.language}</TableCell>
                     <TableCell>
                       <a href={`https://pubmed.ncbi.nlm.nih.gov/${result.uid}/`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline flex items-center">
                         PubMed <ExternalLink className="ml-1 h-4 w-4" />
