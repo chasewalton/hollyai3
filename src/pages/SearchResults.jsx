@@ -4,15 +4,18 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLocation } from 'react-router-dom';
 
 const SearchResults = () => {
   const location = useLocation();
   const searchTerm = new URLSearchParams(location.search).get('query') || '';
   const [selectedResults, setSelectedResults] = useState([]);
+  const [yearFilter, setYearFilter] = useState('');
+  const [authorFilter, setAuthorFilter] = useState('');
 
   const fetchPubMedResults = async () => {
-    const response = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(searchTerm)}&retmode=json&retmax=10`);
+    const response = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(searchTerm)}&retmode=json&retmax=20`);
     const data = await response.json();
     const ids = data.esearchresult.idlist;
     
@@ -39,22 +42,58 @@ const SearchResults = () => {
     // Here you would handle saving the selected results to the project
   };
 
+  const handleDownloadPDFs = () => {
+    // This is a placeholder function. In a real-world scenario, you'd need to
+    // check for freely available PDFs and handle the download process.
+    console.log('Downloading PDFs for:', selectedResults);
+    alert('Downloading PDFs for selected articles. This feature requires integration with PubMed Central API.');
+  };
+
+  const filteredResults = results?.filter(result => {
+    const yearMatch = !yearFilter || result.pubdate.includes(yearFilter);
+    const authorMatch = !authorFilter || result.authors.some(author => 
+      author.name.toLowerCase().includes(authorFilter.toLowerCase())
+    );
+    return yearMatch && authorMatch;
+  });
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-6">Search Results for "{searchTerm}"</h1>
 
+      <div className="mb-4 flex space-x-4">
+        <Select onValueChange={setYearFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by Year" />
+          </SelectTrigger>
+          <SelectContent>
+            {['2023', '2022', '2021', '2020', '2019'].map(year => (
+              <SelectItem key={year} value={year}>{year}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Input
+          placeholder="Filter by Author"
+          value={authorFilter}
+          onChange={(e) => setAuthorFilter(e.target.value)}
+          className="w-[200px]"
+        />
+      </div>
+
       {isLoading && <p>Loading...</p>}
       {isError && <p>Error fetching results. Please try again.</p>}
 
-      {results && (
-        <div className="mb-4">
+      {filteredResults && (
+        <div className="mb-4 space-x-2">
           <Button onClick={handleSaveSelection}>Save Selected Results</Button>
+          <Button onClick={handleDownloadPDFs}>Download Selected PDFs</Button>
         </div>
       )}
 
-      {results && (
+      {filteredResults && (
         <div className="grid gap-4">
-          {results.map((result) => (
+          {filteredResults.map((result) => (
             <Card key={result.uid}>
               <CardHeader className="flex flex-row items-center space-x-4">
                 <Checkbox
