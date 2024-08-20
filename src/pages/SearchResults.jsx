@@ -143,7 +143,7 @@ const SearchResults = () => {
   }, []);
 
   const handleMeshTermSelection = useCallback((terms) => {
-    setSelectedMeshTerms(terms);
+    setSelectedMeshTerms(Array.isArray(terms) ? terms : [terms]);
   }, []);
 
   useEffect(() => {
@@ -195,7 +195,6 @@ const SearchResults = () => {
       <div className="mb-4">
         <h3 className="text-lg font-semibold mb-2">MeSH Term Combinations:</h3>
         <Select
-          multiple
           value={selectedMeshTerms}
           onValueChange={handleMeshTermSelection}
         >
