@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import * as Dialog from '@radix-ui/react-dialog';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,38 +12,40 @@ const NewProjectDialog = ({ isOpen, onClose, onCreateProject }) => {
     if (projectName.trim()) {
       onCreateProject(projectName.trim());
       setProjectName('');
+      onClose();
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Create New Project</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="projectName" className="text-right">
+    <Dialog.Root open={isOpen} onOpenChange={onClose}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 bg-black/50" />
+        <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg w-96">
+          <Dialog.Title className="text-lg font-bold mb-4">Create New Project</Dialog.Title>
+          <form onSubmit={handleSubmit}>
+            <div className="mb-4">
+              <Label htmlFor="projectName" className="block mb-2">
                 Project Name
               </Label>
               <Input
                 id="projectName"
                 value={projectName}
                 onChange={(e) => setProjectName(e.target.value)}
-                className="col-span-3"
+                className="w-full"
               />
             </div>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit">Create Project</Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+            <div className="flex justify-end space-x-2">
+              <Dialog.Close asChild>
+                <Button type="button" variant="outline">
+                  Cancel
+                </Button>
+              </Dialog.Close>
+              <Button type="submit">Create Project</Button>
+            </div>
+          </form>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 };
 
