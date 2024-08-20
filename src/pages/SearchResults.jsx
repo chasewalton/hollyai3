@@ -6,7 +6,15 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLocation, useNavigate } from 'react-router-dom';
-import { X } from 'lucide-react';
+import { X, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const SearchResults = () => {
   const location = useLocation();
@@ -17,9 +25,13 @@ const SearchResults = () => {
   const [yearFilter, setYearFilter] = useState('');
   const [authorFilter, setAuthorFilter] = useState('');
   const [savedResults, setSavedResults] = useState([]);
+  const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
+  const [textAvailability, setTextAvailability] = useState('');
+  const [articleType, setArticleType] = useState('');
+  const [publicationDate, setPublicationDate] = useState('');
 
   const fetchPubMedResults = async () => {
-    const response = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(searchTerm)}&retmode=json&retmax=20`);
+    const response = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(searchTerm)}&retmode=json&retmax=100`);
     const data = await response.json();
     const ids = data.esearchresult.idlist;
     
@@ -72,8 +84,33 @@ const SearchResults = () => {
     const authorMatch = !authorFilter || result.authors.some(author => 
       author.name.toLowerCase().includes(authorFilter.toLowerCase())
     );
-    return yearMatch && authorMatch;
+    const textAvailabilityMatch = !textAvailability || (
+      (textAvailability === 'abstract' && result.hasabstract === 'Y') ||
+      (textAvailability === 'free_full_text' && result.pmc !== '') ||
+      (textAvailability === 'full_text' && (result.pmc !== '' || result.fulljournalname !== ''))
+    );
+    const articleTypeMatch = !articleType || result.pubtype.includes(articleType);
+    const publicationDateMatch = !publicationDate || (
+      (publicationDate === '1_year' && new Date(result.pubdate) >= new Date().setFullYear(new Date().getFullYear() - 1)) ||
+      (publicationDate === '5_years' && new Date(result.pubdate) >= new Date().setFullYear(new Date().getFullYear() - 5)) ||
+      (publicationDate === '10_years' && new Date(result.pubdate) >= new Date().setFullYear(new Date().getFullYear() - 10))
+    );
+    return yearMatch && authorMatch && textAvailabilityMatch && articleTypeMatch && publicationDateMatch;
   });
+
+  const timelineData = filteredResults?.reduce((acc, result) => {
+    const year = new Date(result.pubdate).getFullYear();
+    acc[year] = (acc[year] || 0) + 1;
+    return acc;
+  }, {});
+
+  const resetFilters = () => {
+    setYearFilter('');
+    setAuthorFilter('');
+    setTextAvailability('');
+    setArticleType('');
+    setPublicationDate('');
+  };
 
   return (
     <div className="container mx-auto p-4 flex">
@@ -94,13 +131,13 @@ const SearchResults = () => {
           </div>
         </form>
 
-        <div className="mb-4 flex space-x-4">
-          <Select onValueChange={setYearFilter}>
+        <div className="mb-4 flex flex-wrap gap-4">
+          <Select value={yearFilter} onValueChange={setYearFilter}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filter by Year" />
             </SelectTrigger>
             <SelectContent>
-              {['2023', '2022', '2021', '2020', '2019'].map(year => (
+              {['2024', '2023', '2022', '2021', '2020'].map(year => (
                 <SelectItem key={year} value={year}>{year}</SelectItem>
               ))}
             </SelectContent>
@@ -112,7 +149,78 @@ const SearchResults = () => {
             onChange={(e) => setAuthorFilter(e.target.value)}
             className="w-[200px]"
           />
+
+          <Select value={textAvailability} onValueChange={setTextAvailability}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Text Availability" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="abstract">Abstract</SelectItem>
+              <SelectItem value="free_full_text">Free Full Text</SelectItem>
+              <SelectItem value="full_text">Full Text</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={articleType} onValueChange={setArticleType}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Article Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Books and Documents">Books and Documents</SelectItem>
+              <SelectItem value="Clinical Trial">Clinical Trial</SelectItem>
+              <SelectItem value="Meta-Analysis">Meta-Analysis</SelectItem>
+              <SelectItem value="Randomized Controlled Trial">Randomized Controlled Trial</SelectItem>
+              <SelectItem value="Review">Review</SelectItem>
+              <SelectItem value="Systematic Review">Systematic Review</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={publicationDate} onValueChange={setPublicationDate}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Publication Date" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1_year">1 year</SelectItem>
+              <SelectItem value="5_years">5 years</SelectItem>
+              <SelectItem value="10_years">10 years</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Button onClick={resetFilters}>Reset Filters</Button>
         </div>
+
+        <div className="mb-4">
+          <Button onClick={() => setIsTimelineExpanded(!isTimelineExpanded)}>
+            {isTimelineExpanded ? 'Collapse Timeline' : 'Expand Timeline'}
+            {isTimelineExpanded ? <ChevronUp className="ml-2" /> : <ChevronDown className="ml-2" />}
+          </Button>
+        </div>
+
+        {isTimelineExpanded && timelineData && (
+          <Card className="mb-4">
+            <CardHeader>
+              <CardTitle>Search Results Timeline</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Year</TableHead>
+                    <TableHead>Number of Results</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {Object.entries(timelineData).sort((a, b) => b[0] - a[0]).map(([year, count]) => (
+                    <TableRow key={year}>
+                      <TableCell>{year}</TableCell>
+                      <TableCell>{count}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
 
         {isLoading && <p>Loading...</p>}
         {isError && <p>Error fetching results. Please try again.</p>}
