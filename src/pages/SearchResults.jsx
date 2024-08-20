@@ -50,8 +50,10 @@ const SearchResults = () => {
   }, [meshTerms, searchTerm]);
 
   useEffect(() => {
-    setMeshSearchTerm(meshCombinations[0] || searchTerm);
-  }, [meshCombinations, searchTerm]);
+    if (meshCombinations.length > 0) {
+      setMeshSearchTerm(meshCombinations[0]);
+    }
+  }, [meshCombinations]);
 
   const resetFilters = useCallback(() => {
     setFilters({
@@ -127,15 +129,7 @@ const SearchResults = () => {
           </Button>
           <h1 className="text-3xl font-bold">Search Results</h1>
         </div>
-        <div className="space-x-2">
-          <Button onClick={handleSaveResults}>
-            <Save className="mr-2 h-4 w-4" /> Save Results
-          </Button>
-          <Button onClick={handleDownloadResults}>
-            <Download className="mr-2 h-4 w-4" /> Download
-          </Button>
-          <Button onClick={handleNextStep}>Next Step</Button>
-        </div>
+        <Button onClick={handleNextStep}>Next Step</Button>
       </div>
 
       {/* Search Form */}
@@ -166,7 +160,7 @@ const SearchResults = () => {
             </SelectTrigger>
             <SelectContent>
               {meshCombinations.map((combo, index) => (
-                <SelectItem key={index} value={combo || `combo_${index}`}>{combo || "No combination available"}</SelectItem>
+                <SelectItem key={index} value={combo}>{combo}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -204,8 +198,16 @@ const SearchResults = () => {
         </div>
 
         {/* Search Results */}
-        <div className="w-3/4">
+        <div className="w-2/4">
           <h2 className="text-xl font-semibold mb-4">Search Results</h2>
+          <div className="flex justify-between mb-4">
+            <Button onClick={handleSaveResults}>
+              <Save className="mr-2 h-4 w-4" /> Save Results
+            </Button>
+            <Button onClick={handleDownloadResults}>
+              <Download className="mr-2 h-4 w-4" /> Download
+            </Button>
+          </div>
           {searchError ? (
             <p>Error fetching search results: {searchError.message}</p>
           ) : (
@@ -242,43 +244,43 @@ const SearchResults = () => {
             </Table>
           )}
         </div>
-      </div>
 
-      {/* Saved Results */}
-      {savedResults.length > 0 && (
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle className="flex justify-between items-center">
-              <span>Saved Results</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsTimelineExpanded(!isTimelineExpanded)}
-              >
-                {isTimelineExpanded ? <ChevronUp /> : <ChevronDown />}
-              </Button>
-            </CardTitle>
-          </CardHeader>
-          {isTimelineExpanded && (
-            <CardContent>
-              {savedResults.map((result) => (
-                <div key={result.id} className="flex items-center justify-between mb-2">
-                  <span>{result.title}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setSavedResults(prev => prev.filter(r => r.id !== result.id));
-                    }}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </CardContent>
-          )}
-        </Card>
-      )}
+        {/* Saved Results */}
+        <div className="w-1/4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex justify-between items-center">
+                <span>Saved Results</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsTimelineExpanded(!isTimelineExpanded)}
+                >
+                  {isTimelineExpanded ? <ChevronUp /> : <ChevronDown />}
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            {isTimelineExpanded && (
+              <CardContent>
+                {savedResults.map((result) => (
+                  <div key={result.id} className="flex items-center justify-between mb-2">
+                    <span>{result.title}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSavedResults(prev => prev.filter(r => r.id !== result.id));
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </CardContent>
+            )}
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };
