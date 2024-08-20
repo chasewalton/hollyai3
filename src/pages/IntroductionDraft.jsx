@@ -19,7 +19,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { processContentAndGenerateIntroduction } from '@/utils/openaiService';
-import CitationTooltip from '@/components/CitationTooltip';
+import CitationTooltip from '../components/CitationTooltip';
 
 const IntroductionDraft = () => {
   const location = useLocation();
