@@ -25,9 +25,6 @@ const SearchResults = () => {
   const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
   const projectInfo = location.state?.projectInfo || {};
 
-  const handleBack = () => {
-    navigate(-1);
-  };
   const [selectedResults, setSelectedResults] = useState([]);
   const [yearFilter, setYearFilter] = useState('');
   const [authorFilter, setAuthorFilter] = useState('');
@@ -61,12 +58,76 @@ const SearchResults = () => {
     setPublicationDate('');
   };
 
-  // ... (rest of the component code)
+  const handleBack = () => {
+    navigate(-1);
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    // Implement search functionality here
+  };
+
+  const handleSaveResults = () => {
+    setSavedResults(selectedResults);
+    localStorage.setItem('savedResults', JSON.stringify(selectedResults));
+  };
+
+  const handleDownloadResults = () => {
+    // Implement download functionality here
+  };
+
+  const handleNextStep = () => {
+    navigate('/theme-analysis', { state: { themes: savedResults.map(result => result.title).join('\n') } });
+  };
+
+  const { data: searchResults, isLoading: isSearchLoading, error: searchError } = useQuery({
+    queryKey: ['pubmedSearch', meshSearchTerm],
+    queryFn: async () => {
+      // Implement the actual PubMed API call here
+      // This is a placeholder implementation
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return [
+        { id: 1, title: 'Sample Article 1', authors: ['Author A', 'Author B'], year: '2023' },
+        { id: 2, title: 'Sample Article 2', authors: ['Author C', 'Author D'], year: '2022' },
+      ];
+    },
+    enabled: !!meshSearchTerm,
+  });
 
   return (
     <div className="container mx-auto p-4">
-      {/* ... (other JSX remains the same) */}
-      
+      <LoadingOverlay isLoading={isLoading || isSearchLoading} message="Searching PubMed..." />
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center">
+          <Button variant="ghost" size="icon" onClick={handleBack} className="mr-2">
+            <ArrowLeft className="h-6 w-6" />
+          </Button>
+          <h1 className="text-3xl font-bold">Search Results</h1>
+        </div>
+        <div className="space-x-2">
+          <Button onClick={handleSaveResults}>
+            <Save className="mr-2 h-4 w-4" /> Save Results
+          </Button>
+          <Button onClick={handleDownloadResults}>
+            <Download className="mr-2 h-4 w-4" /> Download
+          </Button>
+          <Button onClick={handleNextStep}>Next Step</Button>
+        </div>
+      </div>
+
+      <form onSubmit={handleSearch} className="mb-6">
+        <div className="flex gap-2">
+          <Input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Refine your search query"
+            className="flex-grow"
+          />
+          <Button type="submit">Search</Button>
+        </div>
+      </form>
+
       {isMeshLoading ? (
         <p>Converting to MeSH terms...</p>
       ) : meshError ? (
@@ -89,10 +150,7 @@ const SearchResults = () => {
         <p>No MeSH terms found. Using original search term.</p>
       )}
 
-      {/* ... (rest of the JSX remains the same) */}
-      
       <div className="flex gap-4">
-        {/* Filters Column */}
         <div className="w-1/4">
           <h2 className="text-xl font-semibold mb-4">Filters</h2>
           <div className="space-y-4">
@@ -151,12 +209,82 @@ const SearchResults = () => {
 
             <Button onClick={resetFilters} className="w-full">Reset Filters</Button>
           </div>
-
-          {/* ... (rest of the component code remains the same) */}
         </div>
 
-        {/* ... (Search Results and Saved Results columns remain the same) */}
+        <div className="w-3/4">
+          <h2 className="text-xl font-semibold mb-4">Search Results</h2>
+          {searchError ? (
+            <p>Error fetching search results: {searchError.message}</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[50px]"></TableHead>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Authors</TableHead>
+                  <TableHead>Year</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {searchResults?.map((result) => (
+                  <TableRow key={result.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedResults.some(r => r.id === result.id)}
+                        onCheckedChange={(checked) => {
+                          setSelectedResults(prev =>
+                            checked
+                              ? [...prev, result]
+                              : prev.filter(r => r.id !== result.id)
+                          );
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell>{result.title}</TableCell>
+                    <TableCell>{result.authors.join(', ')}</TableCell>
+                    <TableCell>{result.year}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </div>
       </div>
+
+      {savedResults.length > 0 && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex justify-between items-center">
+              <span>Saved Results</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsTimelineExpanded(!isTimelineExpanded)}
+              >
+                {isTimelineExpanded ? <ChevronUp /> : <ChevronDown />}
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          {isTimelineExpanded && (
+            <CardContent>
+              {savedResults.map((result, index) => (
+                <div key={result.id} className="flex items-center justify-between mb-2">
+                  <span>{result.title}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSavedResults(savedResults.filter(r => r.id !== result.id));
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </CardContent>
+          )}
+        </Card>
+      )}
     </div>
   );
 };
