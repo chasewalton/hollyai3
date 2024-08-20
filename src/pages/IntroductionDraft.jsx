@@ -4,12 +4,15 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from 'lucide-react';
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 const IntroductionDraft = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [introductionDraft, setIntroductionDraft] = useState('');
   const [showIntroduction, setShowIntroduction] = useState(false);
+  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
   const [steps, setSteps] = useState([
     { name: 'Hybrid Retrieval-Generation Models', progress: 0, speed: 0.5, description: 'Retrieving relevant information from PDFs and generating initial content.' },
     { name: 'Knowledge-Enhanced Text Generation', progress: 0, speed: 0.8, description: 'Using extracted knowledge to generate factually accurate text with in-line citations.' },
@@ -20,8 +23,43 @@ const IntroductionDraft = () => {
     { name: 'Final Refinement', progress: 0, description: 'Refining and polishing the generated draft for coherence and clarity.' }
   ]);
 
+  const [feedback, setFeedback] = useState({
+    contentFocus: '',
+    toneAndStyle: '',
+    clarityAndReadability: '',
+    structureAndFlow: '',
+    accuracyAndRelevance: '',
+    citationsAndReferences: '',
+    lengthAndDetail: '',
+    purposeAndAudience: '',
+    personalization: '',
+    specificWordChoice: ''
+  });
+
   const handleBack = () => {
     navigate(-1);
+  };
+
+  const handleDiscard = () => {
+    navigate('/');
+  };
+
+  const handleSave = () => {
+    // Implement save functionality here
+    alert('Introduction draft saved!');
+  };
+
+  const handleFeedbackChange = (e) => {
+    setFeedback({
+      ...feedback,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSubmitFeedback = () => {
+    // Implement feedback submission functionality here
+    console.log('Feedback submitted:', feedback);
+    alert('Feedback submitted successfully!');
   };
 
   useEffect(() => {
@@ -34,6 +72,7 @@ const IntroductionDraft = () => {
       }
       setIntroductionDraft(location.state?.introductionDraft || 'Introduction draft generated successfully.');
       setShowIntroduction(true);
+      setShowFeedbackForm(true);
     };
 
     processSteps();
@@ -64,31 +103,64 @@ const IntroductionDraft = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <div className="flex items-center mb-6">
-        <Button variant="ghost" size="icon" onClick={handleBack} className="mr-2">
-          <ArrowLeft className="h-6 w-6" />
-        </Button>
-        <h1 className="text-3xl font-bold">Introduction Draft</h1>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center">
+          <Button variant="ghost" size="icon" onClick={handleBack} className="mr-2">
+            <ArrowLeft className="h-6 w-6" />
+          </Button>
+          <h1 className="text-3xl font-bold">Introduction Draft</h1>
+        </div>
+        <div className="space-x-2">
+          <Button variant="outline" onClick={handleDiscard}>Discard</Button>
+          <Button onClick={handleSave}>Save</Button>
+        </div>
       </div>
       <div className="flex gap-6">
         <div className="w-1/2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Generation Process</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {steps.map((step, index) => (
-                <div key={index} className="mb-4">
-                  <div className="flex justify-between mb-1">
-                    <span className="font-semibold">{step.name}</span>
-                    <span>{Math.round(step.progress)}%</span>
+          {!showFeedbackForm ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Generation Process</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {steps.map((step, index) => (
+                  <div key={index} className="mb-4">
+                    <div className="flex justify-between mb-1">
+                      <span className="font-semibold">{step.name}</span>
+                      <span>{Math.round(step.progress)}%</span>
+                    </div>
+                    <Progress value={step.progress} className="mb-2" />
+                    <p className="text-sm text-gray-600">{step.description}</p>
                   </div>
-                  <Progress value={step.progress} className="mb-2" />
-                  <p className="text-sm text-gray-600">{step.description}</p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+                ))}
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>What would you like to change?</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={(e) => { e.preventDefault(); handleSubmitFeedback(); }} className="space-y-4">
+                  {Object.entries(feedback).map(([key, value]) => (
+                    <div key={key}>
+                      <Label htmlFor={key} className="font-semibold">
+                        {key.split(/(?=[A-Z])/).join(' ')}:
+                      </Label>
+                      <Textarea
+                        id={key}
+                        name={key}
+                        value={value}
+                        onChange={handleFeedbackChange}
+                        placeholder={`Enter your feedback about ${key.split(/(?=[A-Z])/).join(' ').toLowerCase()}...`}
+                      />
+                    </div>
+                  ))}
+                  <Button type="submit" className="w-full">Submit Feedback</Button>
+                </form>
+              </CardContent>
+            </Card>
+          )}
         </div>
         <div className="w-1/2">
           <Card>
