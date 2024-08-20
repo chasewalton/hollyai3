@@ -47,7 +47,6 @@ const SearchResults = () => {
     const saved = localStorage.getItem('savedResults');
     return saved ? JSON.parse(saved) : [];
   });
-  // Removed isTimelineExpanded state
   const [meshQuery, setMeshQuery] = useState('');
 
   const resetFilters = useCallback(() => {
@@ -162,6 +161,22 @@ const SearchResults = () => {
     setFilters(prev => ({ ...prev, [key]: value }));
   }, []);
 
+  // Extract unique authors, article types, and languages from search results
+  const uniqueAuthors = useMemo(() => {
+    if (!searchResults) return [];
+    return [...new Set(searchResults.flatMap(result => result.authors))];
+  }, [searchResults]);
+
+  const uniqueArticleTypes = useMemo(() => {
+    if (!searchResults) return [];
+    return [...new Set(searchResults.map(result => result.articleType))];
+  }, [searchResults]);
+
+  const uniqueLanguages = useMemo(() => {
+    if (!searchResults) return [];
+    return [...new Set(searchResults.map(result => result.language))];
+  }, [searchResults]);
+
   return (
     <div className="container mx-auto p-4">
       <div className="flex items-center justify-between mb-6">
@@ -216,31 +231,58 @@ const SearchResults = () => {
             <div>
               <label className="block mb-2">Authors</label>
               <Select
-                isMulti
-                options={searchResults ? [...new Set(searchResults.flatMap(result => result.authors))].map(author => ({ value: author, label: author })) : []}
-                value={filters.authors.map(author => ({ value: author, label: author }))}
-                onChange={(selected) => handleFilterChange('authors', selected.map(item => item.value))}
-              />
+                value={filters.authors}
+                onValueChange={(value) => handleFilterChange('authors', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select authors" />
+                </SelectTrigger>
+                <SelectContent>
+                  {uniqueAuthors.map((author) => (
+                    <SelectItem key={author} value={author}>
+                      {author}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
               <label className="block mb-2">Article Types</label>
               <Select
-                isMulti
-                options={['Journal Article', 'Review', 'Clinical Trial', 'Meta-Analysis', 'Randomized Controlled Trial'].map(type => ({ value: type, label: type }))}
-                value={filters.articleTypes.map(type => ({ value: type, label: type }))}
-                onChange={(selected) => handleFilterChange('articleTypes', selected.map(item => item.value))}
-              />
+                value={filters.articleTypes}
+                onValueChange={(value) => handleFilterChange('articleTypes', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select article types" />
+                </SelectTrigger>
+                <SelectContent>
+                  {uniqueArticleTypes.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
               <label className="block mb-2">Languages</label>
               <Select
-                isMulti
-                options={['English', 'French', 'German', 'Spanish', 'Chinese'].map(lang => ({ value: lang, label: lang }))}
-                value={filters.languages.map(lang => ({ value: lang, label: lang }))}
-                onChange={(selected) => handleFilterChange('languages', selected.map(item => item.value))}
-              />
+                value={filters.languages}
+                onValueChange={(value) => handleFilterChange('languages', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select languages" />
+                </SelectTrigger>
+                <SelectContent>
+                  {uniqueLanguages.map((lang) => (
+                    <SelectItem key={lang} value={lang}>
+                      {lang}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
