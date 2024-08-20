@@ -170,12 +170,12 @@ const SearchResults = () => {
           </SelectTrigger>
           <SelectContent>
             {meshCombinations.map((combo, index) => (
-              <SelectItem key={index} value={combo}>
-                {combo}
+              <SelectItem key={index} value={combo || `combo_${index}`}>
+                {combo || `Combination ${index + 1}`}
               </SelectItem>
             ))}
-            <SelectItem value={originalSearchTerm}>
-              Original: {originalSearchTerm}
+            <SelectItem value={originalSearchTerm || 'original'}>
+              Original: {originalSearchTerm || 'No original term'}
             </SelectItem>
           </SelectContent>
         </Select>
@@ -191,7 +191,7 @@ const SearchResults = () => {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center">
           <Button variant="ghost" size="icon" onClick={handleBack} className="mr-2">
-            <ArrowLeft className="h-6 w-6" />
+            <ArrowLeft className="h-6 w-4" />
           </Button>
           <h1 className="text-3xl font-bold">Search Results</h1>
         </div>
