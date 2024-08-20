@@ -67,8 +67,14 @@ const SearchResults = () => {
   const { data: results, isLoading: isQueryLoading, isError, refetch } = useQuery({
     queryKey: ['pubmedSearch', searchTerm],
     queryFn: fetchPubMedResults,
-    enabled: !!searchTerm,
+    enabled: false,
   });
+
+  React.useEffect(() => {
+    if (location.state?.performSearch) {
+      refetch();
+    }
+  }, [location.state, refetch]);
 
   const handleResultSelection = (uid) => {
     setSelectedResults(prev => 

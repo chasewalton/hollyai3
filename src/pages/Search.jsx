@@ -48,7 +48,7 @@ const Search = () => {
       searchTerm
     };
     navigate('/search-results', { 
-      state: { projectInfo },
+      state: { projectInfo, performSearch: true },
       search: `?query=${encodeURIComponent(searchTerm)}`
     });
   };
@@ -162,7 +162,7 @@ const Search = () => {
             placeholder="Enter your search query in casual language"
             className="flex-grow"
           />
-          <Button type="submit">Search</Button>
+          <Button type="submit">Save and Search</Button>
         </div>
       </form>
     </div>
