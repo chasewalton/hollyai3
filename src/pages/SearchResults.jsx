@@ -53,19 +53,8 @@ const SearchResults = () => {
     );
   };
 
-  const handleSaveSelection = () => {
-    const newSavedResults = selectedResults.map(uid => results.find(r => r.uid === uid)).filter(Boolean);
-    setSavedResults(prev => [...prev, ...newSavedResults]);
-    setSelectedResults([]);
-  };
-
   const handleRemoveSavedResult = (uid) => {
     setSavedResults(prev => prev.filter(result => result.uid !== uid));
-  };
-
-  const handleDownloadPDFs = () => {
-    console.log('Downloading PDFs for:', selectedResults);
-    alert('Downloading PDFs for selected articles. This feature requires integration with PubMed Central API.');
   };
 
   const handleSearch = (e) => {
@@ -107,11 +96,42 @@ const SearchResults = () => {
     setPublicationDate('');
   };
 
+  const handleNextStep = async () => {
+    const selectedArticles = filteredResults.filter(result => selectedResults.includes(result.uid));
+    const articlesData = await Promise.all(selectedArticles.map(async (article) => {
+      const abstractResponse = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${article.uid}&retmode=text&rettype=abstract`);
+      const abstractText = await abstractResponse.text();
+      return {
+        title: article.title,
+        abstract: abstractText,
+        fullText: article.pmc ? `https://www.ncbi.nlm.nih.gov/pmc/articles/${article.pmc}/` : null
+      };
+    }));
+
+    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer sk-svcacct-dALVXu6jJh-OP43b-fHTG6DGJNHALbST0gDrnpAoQfqqKVlmssgnlT3BlbkFJ0rb1xLB-W1zvuGuYjujubIxT20SMUbiMkYY2ib7lqwW-5AlLtQPXgA'
+      },
+      body: JSON.stringify({
+        model: 'gpt-4',
+        messages: [
+          { role: 'system', content: 'You are a helpful assistant that analyzes scientific abstracts and identifies recurring themes.' },
+          { role: 'user', content: `Analyze the following abstracts and identify the top 5 recurring themes:\n\n${articlesData.map(article => `Title: ${article.title}\nAbstract: ${article.abstract}\n\n`).join('')}` }
+        ]
+      })
+    });
+
+    const themes = await openAIResponse.json();
+    navigate('/theme-analysis', { state: { themes: themes.choices[0].message.content } });
+  };
+
   return (
     <div className="container mx-auto p-4">
       <div className="mb-6 flex justify-between items-center">
         <h1 className="text-3xl font-bold">PubMed Search</h1>
-        <Button size="lg">Next Step</Button>
+        <Button size="lg" onClick={handleNextStep}>Next Step</Button>
       </div>
 
       <form onSubmit={handleSearch} className="mb-6">
@@ -227,13 +247,6 @@ const SearchResults = () => {
           <h2 className="text-xl font-semibold mb-4">Search Results</h2>
           {isLoading && <p>Loading...</p>}
           {isError && <p>Error fetching results. Please try again.</p>}
-
-          {filteredResults && (
-            <div className="mb-4 space-x-2">
-              <Button onClick={handleSaveSelection}>Save Selected Results</Button>
-              <Button onClick={handleDownloadPDFs}>Download Selected PDFs</Button>
-            </div>
-          )}
 
           {filteredResults && (
             <div className="space-y-4">

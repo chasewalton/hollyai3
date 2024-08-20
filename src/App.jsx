@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { navItems } from "./nav-items";
 import Navigation from "./components/Navigation";
 import SearchResults from "./pages/SearchResults";
+import ThemeAnalysis from "./pages/ThemeAnalysis";
 
 const queryClient = new QueryClient();
 
@@ -19,6 +20,7 @@ const App = () => (
             <Route key={to} path={to} element={page} />
           ))}
           <Route path="/search-results" element={<SearchResults />} />
+          <Route path="/theme-analysis" element={<ThemeAnalysis />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
