@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useMeshTerms, generateMeshCombinations } from '@/utils/meshConverter';
+import { generateMeshQuery } from '@/utils/openaiService';
 
 const API_KEY = '1d4ccfa738c68098e6d65207184849e55408';
 const BASE_URL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/';
@@ -42,22 +42,7 @@ const SearchResults = () => {
     return saved ? JSON.parse(saved) : [];
   });
   const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
-  const [selectedMeshTerms, setSelectedMeshTerms] = useState([]);
-
-  const { data: meshTerms, isLoading: isMeshLoading, error: meshError, refetch: refetchMeshTerms } = useMeshTerms(searchTerm);
-
-  const meshCombinations = useMemo(() => {
-    if (meshTerms && meshTerms.length > 0) {
-      return generateMeshCombinations(meshTerms);
-    }
-    return [searchTerm];
-  }, [meshTerms, searchTerm]);
-
-  const meshSearchTerm = useMemo(() => {
-    return selectedMeshTerms.length > 0
-      ? `(${selectedMeshTerms.join(') OR (')})`
-      : searchTerm;
-  }, [selectedMeshTerms, searchTerm]);
+  const [meshQuery, setMeshQuery] = useState('');
 
   const resetFilters = useCallback(() => {
     setFilters({
@@ -75,7 +60,7 @@ const SearchResults = () => {
 
   const fetchPubMedResults = async () => {
     try {
-      const searchUrl = `${BASE_URL}esearch.fcgi?db=pubmed&term=${encodeURIComponent(meshSearchTerm)}&retmode=json&retmax=100&api_key=${API_KEY}`;
+      const searchUrl = `${BASE_URL}esearch.fcgi?db=pubmed&term=${encodeURIComponent(meshQuery)}&retmode=json&retmax=100&api_key=${API_KEY}`;
       const searchResponse = await fetch(searchUrl);
       if (!searchResponse.ok) {
         throw new Error(`HTTP error! status: ${searchResponse.status}`);
@@ -104,16 +89,22 @@ const SearchResults = () => {
   };
 
   const { data: searchResults, isLoading: isSearchLoading, error: searchError, refetch } = useQuery({
-    queryKey: ['pubmedSearch', meshSearchTerm, filters],
+    queryKey: ['pubmedSearch', meshQuery, filters],
     queryFn: fetchPubMedResults,
-    enabled: !!meshSearchTerm,
+    enabled: !!meshQuery,
   });
 
-  const handleSearch = useCallback((e) => {
+  const handleSearch = useCallback(async (e) => {
     e.preventDefault();
-    refetch();
-    refetchMeshTerms();
-  }, [refetch, refetchMeshTerms]);
+    try {
+      const generatedMeshQuery = await generateMeshQuery(searchTerm);
+      setMeshQuery(generatedMeshQuery);
+      refetch();
+    } catch (error) {
+      console.error('Error generating MeSH query:', error);
+      // Handle error (e.g., show an alert to the user)
+    }
+  }, [searchTerm, refetch]);
 
   const handleSaveResults = useCallback(() => {
     const updatedResults = [...savedResults, ...selectedResults];
@@ -154,80 +145,6 @@ const SearchResults = () => {
     setFilters(prev => ({ ...prev, [key]: value }));
   }, []);
 
-  const handleMeshTermSelection = useCallback((terms) => {
-    setSelectedMeshTerms(Array.isArray(terms) ? terms : [terms]);
-  }, []);
-
-  useEffect(() => {
-    if (meshCombinations.length > 0 && selectedMeshTerms.length === 0) {
-      setSelectedMeshTerms([meshCombinations[0]]);
-    }
-  }, [meshCombinations, selectedMeshTerms]);
-
-  const MeshTermsSection = ({ 
-    isMeshLoading, 
-    meshError, 
-    meshCombinations, 
-    selectedMeshTerms,
-    handleMeshTermSelection,
-    originalSearchTerm 
-  }) => {
-    if (isMeshLoading) {
-      return (
-        <div className="mb-4 space-y-2">
-          <Skeleton className="h-4 w-2/3" />
-          <Skeleton className="h-10 w-full" />
-        </div>
-      );
-    }
-
-    if (meshError) {
-      return (
-        <Alert variant="destructive" className="mb-4">
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>
-            Failed to convert to MeSH terms: {meshError.message}. Using original search term.
-          </AlertDescription>
-        </Alert>
-      );
-    }
-
-    if (meshCombinations.length === 0) {
-      return (
-        <Alert className="mb-4">
-          <AlertTitle>No MeSH Terms Found</AlertTitle>
-          <AlertDescription>
-            No MeSH terms were found for "{originalSearchTerm}". Your search will use the original term.
-          </AlertDescription>
-        </Alert>
-      );
-    }
-
-    return (
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold mb-2">MeSH Term Combinations:</h3>
-        <Select
-          value={selectedMeshTerms}
-          onValueChange={handleMeshTermSelection}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select MeSH terms" />
-          </SelectTrigger>
-          <SelectContent>
-            {meshCombinations.map((combo, index) => (
-              <SelectItem key={index} value={combo || `combo-${index}`}>
-                {combo || `Combination ${index + 1}`}
-              </SelectItem>
-            ))}
-            <SelectItem value={originalSearchTerm || 'original'}>
-              Original: {originalSearchTerm || 'No original term'}
-            </SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-    );
-  };
-
   return (
     <div className="container mx-auto p-4">
       <div className="flex items-center justify-between mb-6">
@@ -246,21 +163,19 @@ const SearchResults = () => {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Refine your search query"
+            placeholder="Enter your search query"
             className="flex-grow"
           />
           <Button type="submit">Search</Button>
         </div>
       </form>
 
-      <MeshTermsSection
-        isMeshLoading={isMeshLoading}
-        meshError={meshError}
-        meshCombinations={meshCombinations}
-        selectedMeshTerms={selectedMeshTerms}
-        handleMeshTermSelection={handleMeshTermSelection}
-        originalSearchTerm={searchTerm}
-      />
+      {meshQuery && (
+        <Alert className="mb-4">
+          <AlertTitle>Generated MeSH Query</AlertTitle>
+          <AlertDescription>{meshQuery}</AlertDescription>
+        </Alert>
+      )}
 
       <div className="flex gap-4">
         <div className="w-1/4">
