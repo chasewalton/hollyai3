@@ -47,7 +47,7 @@ const SearchResults = () => {
     const saved = localStorage.getItem('savedResults');
     return saved ? JSON.parse(saved) : [];
   });
-  const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
+  // Removed isTimelineExpanded state
   const [meshQuery, setMeshQuery] = useState('');
 
   const resetFilters = useCallback(() => {
@@ -331,22 +331,13 @@ const SearchResults = () => {
         <div className="w-1/4">
           <Card>
             <CardHeader>
-              <CardTitle className="flex justify-between items-center">
-                <span>Saved Results</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsTimelineExpanded(!isTimelineExpanded)}
-                >
-                  {isTimelineExpanded ? <ChevronUp /> : <ChevronDown />}
-                </Button>
-              </CardTitle>
+              <CardTitle>Saved Results</CardTitle>
             </CardHeader>
-            {isTimelineExpanded && (
-              <CardContent>
-                {savedResults.map((result) => (
-                  <div key={result.id} className="flex items-center justify-between mb-2">
-                    <span>{result.title}</span>
+            <CardContent className="max-h-[calc(100vh-200px)] overflow-y-auto">
+              {savedResults.length > 0 ? (
+                savedResults.map((result) => (
+                  <div key={result.id} className="flex items-center justify-between mb-2 p-2 bg-gray-100 rounded">
+                    <span className="text-sm truncate flex-1 mr-2">{result.title}</span>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -357,9 +348,11 @@ const SearchResults = () => {
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
-                ))}
-              </CardContent>
-            )}
+                ))
+              ) : (
+                <p className="text-gray-500 text-sm">No saved results yet.</p>
+              )}
+            </CardContent>
           </Card>
         </div>
       </div>
