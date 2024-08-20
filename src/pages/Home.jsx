@@ -1,18 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { PlusCircle, Upload, ArrowLeft } from "lucide-react";
-import { useNavigate } from 'react-router-dom';
 import { Input } from "@/components/ui/input";
 
 const Home = () => {
   const navigate = useNavigate();
-  const [projects, setProjects] = useState([
-    { id: 1, name: "Project A", lastEdited: "2023-04-15" },
-    { id: 2, name: "Project B", lastEdited: "2023-04-10" },
-    { id: 3, name: "Project C", lastEdited: "2023-04-05" },
-  ]);
+  const [projects, setProjects] = useState([]);
   const [newProjectName, setNewProjectName] = useState('');
+
+  useEffect(() => {
+    const savedProjects = localStorage.getItem('projects');
+    if (savedProjects) {
+      setProjects(JSON.parse(savedProjects));
+    }
+  }, []);
 
   const handleBack = () => {
     console.log("Back button clicked on home page");
@@ -21,11 +24,14 @@ const Home = () => {
   const handleCreateProject = () => {
     if (newProjectName.trim()) {
       const newProject = {
-        id: projects.length + 1,
+        id: Date.now(),
         name: newProjectName.trim(),
         lastEdited: new Date().toISOString().split('T')[0]
       };
-      setProjects([...projects, newProject]);
+      const updatedProjects = [...projects, newProject];
+      setProjects(updatedProjects);
+      localStorage.setItem('projects', JSON.stringify(updatedProjects));
+      setNewProjectName('');
       navigate('/search', { state: { projectTitle: newProjectName.trim() } });
     } else {
       alert('Please enter a project name.');
