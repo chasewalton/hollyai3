@@ -50,3 +50,44 @@ export const generateAITheme = async (existingThemes) => {
     throw error;
   }
 };
+
+export const processContentAndGenerateIntroduction = async (processedContent, themeData) => {
+  try {
+    const contentSummary = processedContent.map(item => `ID: ${item.id}\nAbstract: ${item.abstract}\nContent: ${item.content}`).join('\n\n');
+    const themeSummary = themeData.map(theme => `Theme: ${theme.text}, Importance: ${theme.importance}`).join('\n');
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo-16k", // Using a model with larger context window
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert academic writer tasked with generating a comprehensive introduction for a research paper. Use the provided content and themes to create a well-structured, informative introduction that sets the context for the research, highlights key themes, and presents a clear research question or objective."
+        },
+        {
+          role: "user",
+          content: `Based on the following processed content and themes, generate a comprehensive introduction for a research paper:
+
+Processed Content:
+${contentSummary}
+
+Themes and their importance:
+${themeSummary}
+
+Please write an introduction that:
+1. Provides context for the research topic
+2. Highlights the key themes and their significance
+3. Identifies gaps in current knowledge or areas of controversy
+4. Presents a clear research question or objective
+5. Briefly outlines the structure of the paper
+
+The introduction should be well-structured, engaging, and approximately 500-750 words long.`
+        }
+      ],
+    });
+
+    return completion.choices[0].message.content.trim();
+  } catch (error) {
+    console.error('Error generating introduction:', error);
+    throw error;
+  }
+};
