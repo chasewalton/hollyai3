@@ -27,3 +27,26 @@ export const generateMeshQuery = async (searchTerm) => {
     throw error;
   }
 };
+
+export const generateAITheme = async (existingThemes) => {
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: "You are a helpful assistant that generates additional research themes based on existing themes. Generate a single, concise theme that is related to but distinct from the existing themes."
+        },
+        {
+          role: "user",
+          content: `Based on these existing themes: ${existingThemes.join(', ')}, suggest a new, related research theme.`
+        }
+      ],
+    });
+
+    return completion.choices[0].message.content.trim();
+  } catch (error) {
+    console.error('Error generating AI theme:', error);
+    throw error;
+  }
+};

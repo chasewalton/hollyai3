@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import LoadingOverlay from '@/components/LoadingOverlay';
 import { ArrowLeft } from 'lucide-react';
+import { generateAITheme } from '@/utils/openaiService';
 
 const ThemeAnalysis = () => {
   const location = useLocation();
@@ -25,6 +26,7 @@ const ThemeAnalysis = () => {
     { name: 'Final Refinement', progress: 0 }
   ]);
   const [pdfs, setPdfs] = useState([]);
+  const [isGeneratingAITheme, setIsGeneratingAITheme] = useState(false);
 
   const handleBack = () => {
     navigate(-1);
@@ -111,6 +113,20 @@ const ThemeAnalysis = () => {
     }
   };
 
+  const handleGenerateAITheme = async () => {
+    setIsGeneratingAITheme(true);
+    try {
+      const existingThemes = themes.map(theme => theme.text);
+      const newAITheme = await generateAITheme(existingThemes);
+      setThemes([...themes, { text: newAITheme, rating: 5 }]);
+    } catch (error) {
+      console.error('Error generating AI theme:', error);
+      alert('An error occurred while generating the AI theme. Please try again.');
+    } finally {
+      setIsGeneratingAITheme(false);
+    }
+  };
+
   return (
     <div className="container mx-auto p-4">
       <LoadingOverlay isLoading={isLoading} message="Processing themes and generating content" steps={loadingSteps} />
@@ -148,6 +164,20 @@ const ThemeAnalysis = () => {
           ) : (
             <p>No themes available. Please go back and select articles for analysis.</p>
           )}
+        </CardContent>
+      </Card>
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Generate Additional AI-identified Theme</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Button 
+            onClick={handleGenerateAITheme} 
+            disabled={isGeneratingAITheme}
+            className="w-full"
+          >
+            {isGeneratingAITheme ? 'Generating...' : 'Generate AI Theme'}
+          </Button>
         </CardContent>
       </Card>
       <Card>
