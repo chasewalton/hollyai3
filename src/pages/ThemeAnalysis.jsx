@@ -54,10 +54,10 @@ const ThemeAnalysis = () => {
       const introductionData = await openAIResponse.json();
       const introduction = introductionData.choices[0].message.content;
       
-      navigate('/introduction', { state: { introduction } });
+      navigate('/introduction-draft', { state: { introductionDraft: introduction } });
     } catch (error) {
       console.error('Error generating introduction:', error);
-      alert('An error occurred while generating the introduction. Please try again.');
+      alert('An error occurred while generating the introduction draft. Please try again.');
     } finally {
       setIsLoading(false);
     }
