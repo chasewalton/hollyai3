@@ -35,7 +35,21 @@ const Search = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    navigate(`/search-results?query=${encodeURIComponent(searchTerm)}`);
+    const projectInfo = {
+      projectTitle,
+      firstName,
+      lastName,
+      email,
+      phoneNumber,
+      projectType,
+      numParagraphs,
+      numReferences,
+      searchTerm
+    };
+    navigate('/search-results', { 
+      state: { projectInfo },
+      search: `?query=${encodeURIComponent(searchTerm)}`
+    });
   };
 
   return (
@@ -47,7 +61,7 @@ const Search = () => {
         <h1 className="text-3xl font-bold">Project Information</h1>
       </div>
 
-      <form className="space-y-4 mb-8">
+      <form onSubmit={handleSearch} className="space-y-4 mb-8">
         <div>
           <Label htmlFor="projectTitle">Project Title</Label>
           <Input
@@ -131,10 +145,8 @@ const Search = () => {
             />
           </div>
         </div>
-      </form>
 
-      <h2 className="text-2xl font-bold mb-4">PubMed Search</h2>
-      <form onSubmit={handleSearch} className="mb-6">
+        <h2 className="text-2xl font-bold mb-4">PubMed Search</h2>
         <div className="flex gap-2">
           <Input
             type="text"

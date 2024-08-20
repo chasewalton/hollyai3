@@ -22,6 +22,7 @@ const SearchResults = () => {
   const navigate = useNavigate();
   const initialSearchTerm = new URLSearchParams(location.search).get('query') || '';
   const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
+  const projectInfo = location.state?.projectInfo || {};
 
   const handleBack = () => {
     navigate(-1);
@@ -158,7 +159,13 @@ const SearchResults = () => {
 
       const themes = await openAIResponse.json();
       setIsLoading(false);
-      navigate('/theme-analysis', { state: { themes: themes.choices[0].message.content } });
+      navigate('/theme-analysis', { 
+        state: { 
+          themes: themes.choices[0].message.content,
+          projectInfo: projectInfo,
+          savedResults: savedResults
+        } 
+      });
     } catch (error) {
       console.error('Error in theme analysis:', error);
       setIsLoading(false);
