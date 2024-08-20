@@ -81,69 +81,49 @@ const IntroductionDraft = () => {
   };
 
   useEffect(() => {
-    const processSteps = async () => {
-      await processVariableStep(0, 'Hybrid Retrieval-Generation Models');
-      await processVariableStep(1, 'Knowledge-Enhanced Text Generation');
-      await processVariableStep(2, 'Memory-Augmented Neural Networks (MANNs)');
-      await processVariableStep(3, 'Attention Mechanisms');
-      await processFixedStep(4, 'Content Extraction');
-      await processFixedStep(5, 'Draft Generation');
-      await processFixedStep(6, 'Final Refinement');
-      setShowIntroduction(true);
-      setShowFeedbackForm(true);
+    const generateIntroduction = async () => {
+      try {
+        const savedResults = JSON.parse(localStorage.getItem('savedResults') || '[]');
+        const processedContent = savedResults.map(result => ({
+          id: result.uid,
+          content: result.content || '',
+          abstract: result.abstract || ''
+        }));
+        const themeData = location.state?.themes || [];
+        
+        for (const step of steps) {
+          await processStep(step.name);
+        }
+
+        const generatedIntroduction = await processContentAndGenerateIntroduction(
+          processedContent,
+          themeData,
+          (stepName, progress) => {
+            setSteps(prevSteps => prevSteps.map(s => 
+              s.name === stepName ? { ...s, progress } : s
+            ));
+          }
+        );
+        setIntroductionDraft(generatedIntroduction);
+        setShowIntroduction(true);
+        setShowFeedbackForm(true);
+      } catch (error) {
+        console.error('Error generating introduction:', error);
+        setIntroductionDraft('Failed to generate introduction. Please try again.');
+      }
     };
 
-    processSteps();
+    generateIntroduction();
   }, []);
 
-  const processVariableStep = async (stepIndex, stepName) => {
-    const savedResults = JSON.parse(localStorage.getItem('savedResults') || '[]');
-    const processedContent = savedResults.map(result => ({
-      id: result.uid,
-      content: result.content || '',
-      abstract: result.abstract || '',
-      hybridRetrievalGeneration: result.hybridRetrievalGeneration || '',
-      knowledgeEnhancedTextGeneration: result.knowledgeEnhancedTextGeneration || '',
-      memoryAugmentedNeuralNetworks: result.memoryAugmentedNeuralNetworks || '',
-      attentionMechanismsContentExtraction: result.attentionMechanismsContentExtraction || ''
-    }));
-    
+  const processStep = async (stepName) => {
     const totalIterations = 100;
     for (let i = 0; i <= totalIterations; i++) {
       const progress = Math.min((i / totalIterations) * 100, 100);
-      setSteps(prevSteps => prevSteps.map((s, index) => 
-        index === stepIndex ? { ...s, progress } : s
+      setSteps(prevSteps => prevSteps.map(s => 
+        s.name === stepName ? { ...s, progress } : s
       ));
       await new Promise(resolve => setTimeout(resolve, 50));
-      if (progress >= 100) break;
-    }
-  };
-
-  const processFixedStep = async (stepIndex, stepName) => {
-    // Simulating a task that runs in multiple iterations.
-    const totalIterations = 10;
-    for (let i = 0; i <= totalIterations; i++) {
-      setSteps(prevSteps => prevSteps.map((step, index) => 
-        index === stepIndex ? { ...step, progress: (i / totalIterations) * 100 } : step
-      ));
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
-  };
-
-  const generateIntroduction = async () => {
-    try {
-      const savedResults = JSON.parse(localStorage.getItem('savedResults') || '[]');
-      const processedContent = savedResults.map(result => ({
-        id: result.uid,
-        content: result.content || '',
-        abstract: result.abstract || ''
-      }));
-      const themeData = location.state?.themes || [];
-      const generatedIntroduction = await processContentAndGenerateIntroduction(processedContent, themeData);
-      setIntroductionDraft(generatedIntroduction);
-    } catch (error) {
-      console.error('Error generating introduction:', error);
-      setIntroductionDraft('Failed to generate introduction. Please try again.');
     }
   };
 

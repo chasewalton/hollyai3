@@ -8,7 +8,7 @@ const openai = new OpenAI({
 export const generateMeshQuery = async (searchTerm) => {
   try {
     const completion = await openai.chat.completions.create({
-      model: "chatgpt-4o-latest",
+      model: "gpt-4",
       messages: [
         {
           role: "system",
@@ -30,7 +30,7 @@ export const generateMeshQuery = async (searchTerm) => {
 export const generateAITheme = async (existingThemes) => {
   try {
     const completion = await openai.chat.completions.create({
-      model: "chatgpt-4o-latest",
+      model: "gpt-4",
       messages: [
         {
           role: "system",
@@ -56,10 +56,6 @@ export const processContentAndGenerateIntroduction = async (processedContent, th
       ID: ${item.id}
       Abstract: ${item.abstract}
       Content: ${item.content}
-      Hybrid Retrieval-Generation: ${item.hybridRetrievalGeneration}
-      Knowledge-Enhanced Text Generation: ${item.knowledgeEnhancedTextGeneration}
-      Memory-Augmented Neural Networks: ${item.memoryAugmentedNeuralNetworks}
-      Attention Mechanisms Content Extraction: ${item.attentionMechanismsContentExtraction}
     `).join('\n\n');
     updateProgress('Hybrid Retrieval-Generation Models', 100);
 
@@ -71,15 +67,15 @@ export const processContentAndGenerateIntroduction = async (processedContent, th
     updateProgress('Attention Mechanisms', 50);
 
     const completion = await openai.chat.completions.create({
-      model: "chatgpt-4o-latest",
+      model: "gpt-4",
       messages: [
         {
           role: "system",
-          content: "You are an expert academic writer with advanced knowledge in writing grants and protocols. Your task is to generate a comprehensive introduction for a research paper, leveraging the provided content and themes."
+          content: "You are an expert academic writer with advanced knowledge in writing grants and protocols. Your task is to generate a comprehensive introduction for a research paper, leveraging the provided content and themes. Use advanced NLP techniques such as Hybrid Retrieval-Generation Models, Knowledge-Enhanced Text Generation, Memory-Augmented Neural Networks (MANNs), and Attention Mechanisms in your approach."
         },
         {
           role: "user",
-          content: `Based on the following processed content, themes, and generate a sophisticated introduction for a research paper:
+          content: `Based on the following processed content and themes, generate a sophisticated introduction for a research paper:
 Processed Content:
 ${contentSummary}
 Themes and their importance:
