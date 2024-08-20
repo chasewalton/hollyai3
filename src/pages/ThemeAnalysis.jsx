@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,13 +12,15 @@ const ThemeAnalysis = () => {
   const navigate = useNavigate();
   const initialThemes = location.state?.themes ? location.state.themes.split('\n').filter(theme => theme.trim() !== '') : [];
   const [themes, setThemes] = useState(initialThemes.map(theme => ({ text: theme, rating: 5 })));
+  const [newTheme, setNewTheme] = useState('');
+  const [newThemeRating, setNewThemeRating] = useState(5);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState('');
+  const [pdfs, setPdfs] = useState([]);
 
   const handleBack = () => {
     navigate(-1);
   };
-  const [newTheme, setNewTheme] = useState('');
-  const [newThemeRating, setNewThemeRating] = useState(5);
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleRatingChange = (index, newRating) => {
     const updatedThemes = [...themes];
@@ -34,69 +36,38 @@ const ThemeAnalysis = () => {
     }
   };
 
+  const retrievePDFs = async (savedResults) => {
+    setLoadingStep('Retrieving PDFs');
+    // Simulating PDF retrieval
+    const retrievedPDFs = await Promise.all(savedResults.map(async (result) => {
+      // In a real scenario, you would fetch the actual PDF content here
+      return { id: result.uid, content: `Simulated PDF content for ${result.title}` };
+    }));
+    setPdfs(retrievedPDFs);
+  };
+
+  const runREALM = async (pdfs) => {
+    setLoadingStep('Running REALM');
+    // Simulating REALM processing
+    // In a real scenario, you would integrate with a REALM implementation
+    await new Promise(resolve => setTimeout(resolve, 3000)); // Simulating processing time
+    console.log('REALM processing completed');
+  };
+
   const handleNextStep = async () => {
     setIsLoading(true);
     try {
-      const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer sk-svcacct-dALVXu6jJh-OP43b-fHTG6DGJNHALbST0gDrnpAoQfqqKVlmssgnlT3BlbkFJ0rb1xLB-W1zvuGuYjujubIxT20SMUbiMkYY2ib7lqwW-5AlLtQPXgA'
-        },
-        body: JSON.stringify({
-          model: 'gpt-4',
-          messages: [
-            { role: 'system', content: 'You are a helpful assistant that writes introductions based on provided themes and their importance.' },
-            { role: 'user', content: `Write a 4-5 paragraph introduction based on the following themes and their importance (1-10 scale):\n\n${themes.map(theme => `${theme.text} (Importance: ${theme.rating}/10)`).join('\n')}` }
-          ]
-        })
-      });
+      const savedResults = JSON.parse(localStorage.getItem('savedResults') || '[]');
+      await retrievePDFs(savedResults);
+      await runREALM(pdfs);
 
-      if (!openAIResponse.ok) {
-        throw new Error('Failed to get response from OpenAI');
-      }
+      // Generate introduction draft using OpenAI (placeholder for now)
+      const introductionDraft = "This is a placeholder for the generated introduction draft.";
 
-      const introductionData = await openAIResponse.json();
-      const introduction = introductionData.choices[0].message.content;
-      
-      navigate('/introduction-draft', { state: { introductionDraft: introduction } });
+      navigate('/introduction-draft', { state: { introductionDraft } });
     } catch (error) {
-      console.error('Error generating introduction:', error);
-      alert('An error occurred while generating the introduction draft. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGenerateAdditionalTheme = async () => {
-    setIsLoading(true);
-    try {
-      const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer sk-svcacct-dALVXu6jJh-OP43b-fHTG6DGJNHALbST0gDrnpAoQfqqKVlmssgnlT3BlbkFJ0rb1xLB-W1zvuGuYjujubIxT20SMUbiMkYY2ib7lqwW-5AlLtQPXgA'
-        },
-        body: JSON.stringify({
-          model: 'gpt-4',
-          messages: [
-            { role: 'system', content: 'You are a helpful assistant that analyzes research themes and generates additional relevant themes.' },
-            { role: 'user', content: `Based on the following themes, generate one additional theme that is relevant but not redundant:\n\n${themes.map(theme => theme.text).join('\n')}` }
-          ]
-        })
-      });
-
-      if (!openAIResponse.ok) {
-        throw new Error('Failed to get response from OpenAI');
-      }
-
-      const themeData = await openAIResponse.json();
-      const newGeneratedTheme = themeData.choices[0].message.content.trim();
-      
-      setThemes([...themes, { text: newGeneratedTheme, rating: 5 }]);
-    } catch (error) {
-      console.error('Error generating additional theme:', error);
-      alert('An error occurred while generating an additional theme. Please try again.');
+      console.error('Error in theme analysis:', error);
+      alert('An error occurred during theme analysis. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -104,7 +75,7 @@ const ThemeAnalysis = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <LoadingOverlay isLoading={isLoading} />
+      <LoadingOverlay isLoading={isLoading} message={loadingStep} />
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center">
           <Button variant="ghost" size="icon" onClick={handleBack} className="mr-2">
@@ -141,7 +112,6 @@ const ThemeAnalysis = () => {
           )}
         </CardContent>
       </Card>
-      <Button onClick={handleGenerateAdditionalTheme} className="w-full mb-6">Generate Additional Theme</Button>
       <Card>
         <CardHeader>
           <CardTitle>Add Custom Theme</CardTitle>
