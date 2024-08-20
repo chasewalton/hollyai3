@@ -10,10 +10,10 @@ const IntroductionDraft = () => {
   const navigate = useNavigate();
   const [introductionDraft, setIntroductionDraft] = useState('');
   const [steps, setSteps] = useState([
-    { name: 'Hybrid Retrieval-Generation Models', progress: 0, description: 'Retrieving relevant information from PDFs and generating initial content.' },
-    { name: 'Knowledge-Enhanced Text Generation', progress: 0, description: 'Using extracted knowledge to generate factually accurate text with in-line citations.' },
-    { name: 'Memory-Augmented Neural Networks (MANNs)', progress: 0, description: 'Storing and accessing information from multiple PDFs to effectively combine information from different sources.' },
-    { name: 'Attention Mechanisms', progress: 0, description: 'Focusing on the most relevant parts of the text within PDFs to identify key points and determine citation placement.' },
+    { name: 'Hybrid Retrieval-Generation Models', progress: 0, maxProgress: 85, speed: 0.5, description: 'Retrieving relevant information from PDFs and generating initial content.' },
+    { name: 'Knowledge-Enhanced Text Generation', progress: 0, maxProgress: 95, speed: 0.8, description: 'Using extracted knowledge to generate factually accurate text with in-line citations.' },
+    { name: 'Memory-Augmented Neural Networks (MANNs)', progress: 0, maxProgress: 90, speed: 0.6, description: 'Storing and accessing information from multiple PDFs to effectively combine information from different sources.' },
+    { name: 'Attention Mechanisms', progress: 0, maxProgress: 100, speed: 0.7, description: 'Focusing on the most relevant parts of the text within PDFs to identify key points and determine citation placement.' },
     { name: 'Content Extraction', progress: 0, description: 'Extracting key concepts, quotes, and summaries from the retrieved information.' },
     { name: 'Draft Generation', progress: 0, description: 'Generating the introduction draft using the extracted content.' },
     { name: 'Final Refinement', progress: 0, description: 'Refining and polishing the generated draft for coherence and clarity.' }
@@ -25,8 +25,11 @@ const IntroductionDraft = () => {
 
   useEffect(() => {
     const processSteps = async () => {
-      for (let i = 0; i < steps.length; i++) {
-        await processStep(i);
+      for (let i = 0; i < 4; i++) {
+        await processVariableStep(i);
+      }
+      for (let i = 4; i < steps.length; i++) {
+        await processFixedStep(i);
       }
       setIntroductionDraft(location.state?.introductionDraft || 'Introduction draft generated successfully.');
     };
@@ -34,10 +37,23 @@ const IntroductionDraft = () => {
     processSteps();
   }, [location.state?.introductionDraft]);
 
-  const processStep = async (stepIndex) => {
+  const processVariableStep = async (stepIndex) => {
+    const step = steps[stepIndex];
+    const totalIterations = 100;
+    for (let i = 0; i <= totalIterations; i++) {
+      await new Promise(resolve => setTimeout(resolve, 50 / step.speed));
+      const progress = Math.min((i / totalIterations) * step.maxProgress, step.maxProgress);
+      setSteps(prevSteps => prevSteps.map((s, index) => 
+        index === stepIndex ? { ...s, progress } : s
+      ));
+      if (progress >= step.maxProgress) break;
+    }
+  };
+
+  const processFixedStep = async (stepIndex) => {
     const totalIterations = 10;
     for (let i = 0; i <= totalIterations; i++) {
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulating work being done
+      await new Promise(resolve => setTimeout(resolve, 500));
       setSteps(prevSteps => prevSteps.map((step, index) => 
         index === stepIndex ? { ...step, progress: (i / totalIterations) * 100 } : step
       ));
