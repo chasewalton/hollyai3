@@ -1,7 +1,7 @@
 import React from 'react';
 import { Progress } from "@/components/ui/progress";
 
-const LoadingOverlay = ({ isLoading, message, steps }) => {
+const LoadingOverlay = ({ isLoading, message, steps = [] }) => {
   if (!isLoading) return null;
 
   return (
