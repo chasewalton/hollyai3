@@ -20,6 +20,9 @@ import { useMeshTerms, generateMeshCombinations } from '@/utils/meshConverter';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const API_KEY = '1d4ccfa738c68098e6d65207184849e55408'; // In production, use an environment variable
+const BASE_URL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/';
+
 const SearchResults = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -73,8 +76,8 @@ const SearchResults = () => {
 
   const handleSearch = useCallback((e) => {
     e.preventDefault();
-    // Implement search functionality here
-  }, []);
+    refetch();
+  }, [refetch]);
 
   const handleSaveResults = useCallback(() => {
     const updatedResults = [...savedResults, ...selectedResults];
@@ -83,24 +86,46 @@ const SearchResults = () => {
   }, [savedResults, selectedResults]);
 
   const handleDownloadResults = useCallback(() => {
-    // Implement download functionality here
-  }, []);
+    const resultsText = selectedResults.map(result => 
+      `Title: ${result.title}\nAuthors: ${result.authors.join(', ')}\nYear: ${result.year}\nPubMed ID: ${result.uid}\n\n`
+    ).join('');
+    const blob = new Blob([resultsText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'pubmed_results.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [selectedResults]);
 
   const handleNextStep = useCallback(() => {
     navigate('/theme-analysis', { state: { themes: savedResults.map(result => result.title).join('\n') } });
   }, [navigate, savedResults]);
 
-  const { data: searchResults, isLoading: isSearchLoading, error: searchError } = useQuery({
+  const fetchPubMedResults = async () => {
+    const searchUrl = `${BASE_URL}esearch.fcgi?db=pubmed&term=${encodeURIComponent(meshSearchTerm)}&retmode=json&retmax=100&api_key=${API_KEY}`;
+    const searchResponse = await fetch(searchUrl);
+    const searchData = await searchResponse.json();
+    const ids = searchData.esearchresult.idlist;
+    
+    const summaryUrl = `${BASE_URL}esummary.fcgi?db=pubmed&id=${ids.join(',')}&retmode=json&api_key=${API_KEY}`;
+    const summaryResponse = await fetch(summaryUrl);
+    const summaryData = await summaryResponse.json();
+    
+    return Object.values(summaryData.result).filter(item => item.uid).map(item => ({
+      id: item.uid,
+      title: item.title,
+      authors: item.authors.map(author => author.name),
+      year: item.pubdate.split(' ')[0],
+      uid: item.uid
+    }));
+  };
+
+  const { data: searchResults, isLoading: isSearchLoading, error: searchError, refetch } = useQuery({
     queryKey: ['pubmedSearch', meshSearchTerm, filters],
-    queryFn: async () => {
-      // Implement the actual PubMed API call here
-      // This is a placeholder implementation
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return [
-        { id: 1, title: 'Sample Article 1', authors: ['Author A', 'Author B'], year: '2023' },
-        { id: 2, title: 'Sample Article 2', authors: ['Author C', 'Author D'], year: '2022' },
-      ];
-    },
+    queryFn: fetchPubMedResults,
     enabled: !!meshSearchTerm,
   });
 
@@ -110,7 +135,7 @@ const SearchResults = () => {
       return (
         (!filters.year || result.year === filters.year) &&
         (!filters.author || result.authors.some(author => author.toLowerCase().includes(filters.author.toLowerCase())))
-        // Add more filter conditions here
+        // Add more filter conditions here as needed
       );
     });
   }, [searchResults, filters]);
