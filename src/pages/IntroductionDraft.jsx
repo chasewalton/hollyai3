@@ -16,6 +16,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
 const IntroductionDraft = () => {
@@ -24,7 +25,6 @@ const IntroductionDraft = () => {
   const [introductionDraft, setIntroductionDraft] = useState('');
   const [showIntroduction, setShowIntroduction] = useState(false);
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
-  const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
   const [steps, setSteps] = useState([
     { name: 'Hybrid Retrieval-Generation Models', progress: 0, speed: 0.5, description: 'Retrieving relevant information from PDFs and generating initial content.' },
     { name: 'Knowledge-Enhanced Text Generation', progress: 0, speed: 0.8, description: 'Using extracted knowledge to generate factually accurate text with in-line citations.' },
@@ -52,17 +52,8 @@ const IntroductionDraft = () => {
     navigate(-1);
   };
 
-  const handleDiscard = () => {
-    setIsDiscardDialogOpen(true);
-  };
-
   const handleDiscardConfirm = () => {
-    setIsDiscardDialogOpen(false);
     navigate('/project');
-  };
-
-  const handleDiscardCancel = () => {
-    setIsDiscardDialogOpen(false);
   };
 
   const handleSave = async () => {
@@ -137,7 +128,23 @@ const IntroductionDraft = () => {
           <h1 className="text-3xl font-bold">Introduction Draft</h1>
         </div>
         <div className="space-x-2">
-          <Button variant="outline" onClick={handleDiscard}>Discard</Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline">Discard</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete your introduction draft.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>No</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDiscardConfirm}>Yes</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           <Button onClick={handleSave}>Save</Button>
         </div>
       </div>
@@ -217,20 +224,6 @@ const IntroductionDraft = () => {
           </Card>
         </div>
       </div>
-      <AlertDialog open={isDiscardDialogOpen} onOpenChange={setIsDiscardDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your introduction draft.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleDiscardCancel}>No</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDiscardConfirm}>Yes</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };
