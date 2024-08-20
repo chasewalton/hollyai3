@@ -115,16 +115,15 @@ const SearchResults = () => {
   };
 
   const handleNextStep = async () => {
-    if (selectedResults.length === 0) {
-      alert("Please select at least one article before proceeding.");
+    if (savedResults.length === 0) {
+      alert("Please save at least one article before proceeding.");
       return;
     }
 
     setIsLoading(true);
 
     try {
-      const selectedArticles = filteredResults.filter(result => selectedResults.includes(result.uid));
-      const articlesData = await Promise.all(selectedArticles.map(async (article) => {
+      const articlesData = await Promise.all(savedResults.map(async (article) => {
         const abstractResponse = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${article.uid}&retmode=text&rettype=abstract`);
         const abstractText = await abstractResponse.text();
         return {
