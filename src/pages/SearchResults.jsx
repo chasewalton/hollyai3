@@ -20,7 +20,7 @@ import { useMeshTerms, generateMeshCombinations } from '@/utils/meshConverter';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const API_KEY = '1d4ccfa738c68098e6d65207184849e55408'; // In production, use an environment variable
+const API_KEY = '1d4ccfa738c68098e6d65207184849e55408';
 const BASE_URL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/';
 
 const SearchResults = () => {
@@ -74,6 +74,31 @@ const SearchResults = () => {
     navigate(-1);
   }, [navigate]);
 
+  const fetchPubMedResults = async () => {
+    const searchUrl = `${BASE_URL}esearch.fcgi?db=pubmed&term=${encodeURIComponent(meshSearchTerm)}&retmode=json&retmax=100&api_key=${API_KEY}`;
+    const searchResponse = await fetch(searchUrl);
+    const searchData = await searchResponse.json();
+    const ids = searchData.esearchresult.idlist;
+    
+    const summaryUrl = `${BASE_URL}esummary.fcgi?db=pubmed&id=${ids.join(',')}&retmode=json&api_key=${API_KEY}`;
+    const summaryResponse = await fetch(summaryUrl);
+    const summaryData = await summaryResponse.json();
+    
+    return Object.values(summaryData.result).filter(item => item.uid).map(item => ({
+      id: item.uid,
+      title: item.title,
+      authors: item.authors.map(author => author.name),
+      year: item.pubdate.split(' ')[0],
+      uid: item.uid
+    }));
+  };
+
+  const { data: searchResults, isLoading: isSearchLoading, error: searchError, refetch } = useQuery({
+    queryKey: ['pubmedSearch', meshSearchTerm, filters],
+    queryFn: fetchPubMedResults,
+    enabled: !!meshSearchTerm,
+  });
+
   const handleSearch = useCallback((e) => {
     e.preventDefault();
     refetch();
@@ -104,38 +129,12 @@ const SearchResults = () => {
     navigate('/theme-analysis', { state: { themes: savedResults.map(result => result.title).join('\n') } });
   }, [navigate, savedResults]);
 
-  const fetchPubMedResults = async () => {
-    const searchUrl = `${BASE_URL}esearch.fcgi?db=pubmed&term=${encodeURIComponent(meshSearchTerm)}&retmode=json&retmax=100&api_key=${API_KEY}`;
-    const searchResponse = await fetch(searchUrl);
-    const searchData = await searchResponse.json();
-    const ids = searchData.esearchresult.idlist;
-    
-    const summaryUrl = `${BASE_URL}esummary.fcgi?db=pubmed&id=${ids.join(',')}&retmode=json&api_key=${API_KEY}`;
-    const summaryResponse = await fetch(summaryUrl);
-    const summaryData = await summaryResponse.json();
-    
-    return Object.values(summaryData.result).filter(item => item.uid).map(item => ({
-      id: item.uid,
-      title: item.title,
-      authors: item.authors.map(author => author.name),
-      year: item.pubdate.split(' ')[0],
-      uid: item.uid
-    }));
-  };
-
-  const { data: searchResults, isLoading: isSearchLoading, error: searchError, refetch } = useQuery({
-    queryKey: ['pubmedSearch', meshSearchTerm, filters],
-    queryFn: fetchPubMedResults,
-    enabled: !!meshSearchTerm,
-  });
-
   const filteredResults = useMemo(() => {
     if (!searchResults) return [];
     return searchResults.filter(result => {
       return (
         (!filters.year || result.year === filters.year) &&
         (!filters.author || result.authors.some(author => author.toLowerCase().includes(filters.author.toLowerCase())))
-        // Add more filter conditions here as needed
       );
     });
   }, [searchResults, filters]);
@@ -212,7 +211,6 @@ const SearchResults = () => {
     <div className="container mx-auto p-4">
       <LoadingOverlay isLoading={isSearchLoading} message="Searching PubMed..." />
       
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center">
           <Button variant="ghost" size="icon" onClick={handleBack} className="mr-2">
@@ -223,7 +221,6 @@ const SearchResults = () => {
         <Button onClick={handleNextStep}>Next Step</Button>
       </div>
 
-      {/* Search Form */}
       <form onSubmit={handleSearch} className="mb-6">
         <div className="flex gap-2">
           <Input
@@ -237,7 +234,6 @@ const SearchResults = () => {
         </div>
       </form>
 
-      {/* MeSH Terms Section */}
       <MeshTermsSection
         isMeshLoading={isMeshLoading}
         meshError={meshError}
@@ -248,7 +244,6 @@ const SearchResults = () => {
       />
 
       <div className="flex gap-4">
-        {/* Filters */}
         <div className="w-1/4">
           <h2 className="text-xl font-semibold mb-4">Filters</h2>
           <div className="space-y-4">
@@ -269,13 +264,10 @@ const SearchResults = () => {
               onChange={(e) => handleFilterChange('author', e.target.value)}
             />
 
-            {/* Add more filter components here */}
-
             <Button onClick={resetFilters} className="w-full">Reset Filters</Button>
           </div>
         </div>
 
-        {/* Search Results */}
         <div className="w-2/4">
           <h2 className="text-xl font-semibold mb-4">Search Results</h2>
           <div className="flex justify-between mb-4">
@@ -323,7 +315,6 @@ const SearchResults = () => {
           )}
         </div>
 
-        {/* Saved Results */}
         <div className="w-1/4">
           <Card>
             <CardHeader>
