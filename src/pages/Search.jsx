@@ -21,12 +21,10 @@ const Search = () => {
   const [numReferences, setNumReferences] = useState('');
 
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const title = params.get('projectTitle');
-    if (title) {
-      setProjectTitle(title);
+    if (location.state && location.state.projectTitle) {
+      setProjectTitle(location.state.projectTitle);
     }
-  }, [location]);
+  }, [location.state]);
 
   const handleBack = () => {
     navigate(-1);

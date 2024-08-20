@@ -26,7 +26,6 @@ const Home = () => {
         lastEdited: new Date().toISOString().split('T')[0]
       };
       setProjects([...projects, newProject]);
-      setNewProjectName('');
       navigate('/search', { state: { projectTitle: newProjectName.trim() } });
     } else {
       alert('Please enter a project name.');
