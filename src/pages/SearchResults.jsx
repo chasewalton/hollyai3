@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { X, ChevronDown, ChevronUp, Save, Download, ArrowLeft } from 'lucide-react';
+import { X, ChevronDown, ChevronUp, Save, Download, ArrowLeft, ExternalLink } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -15,10 +15,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import LoadingOverlay from '@/components/LoadingOverlay';
-import { useMeshTerms, generateMeshCombinations } from '@/utils/meshConverter';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useMeshTerms, generateMeshCombinations } from '@/utils/meshConverter';
 
 const API_KEY = '1d4ccfa738c68098e6d65207184849e55408';
 const BASE_URL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/';
@@ -43,7 +42,7 @@ const SearchResults = () => {
     return saved ? JSON.parse(saved) : [];
   });
   const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
-  const [meshSearchTerm, setMeshSearchTerm] = useState('');
+  const [selectedMeshTerms, setSelectedMeshTerms] = useState([]);
 
   const { data: meshTerms, isLoading: isMeshLoading, error: meshError } = useMeshTerms(searchTerm);
 
@@ -54,11 +53,11 @@ const SearchResults = () => {
     return [searchTerm];
   }, [meshTerms, searchTerm]);
 
-  useEffect(() => {
-    if (meshCombinations.length > 0) {
-      setMeshSearchTerm(meshCombinations[0]);
-    }
-  }, [meshCombinations]);
+  const meshSearchTerm = useMemo(() => {
+    return selectedMeshTerms.length > 0
+      ? selectedMeshTerms.join(' OR ')
+      : meshCombinations[0] || searchTerm;
+  }, [selectedMeshTerms, meshCombinations, searchTerm]);
 
   const resetFilters = useCallback(() => {
     setFilters({
@@ -112,7 +111,7 @@ const SearchResults = () => {
 
   const handleDownloadResults = useCallback(() => {
     const resultsText = selectedResults.map(result => 
-      `Title: ${result.title}\nAuthors: ${result.authors.join(', ')}\nYear: ${result.year}\nPubMed ID: ${result.uid}\n\n`
+      `Title: ${result.title}\nAuthors: ${result.authors.join(', ')}\nYear: ${result.year}\nPubMed ID: ${result.uid}\nPubMed Link: https://pubmed.ncbi.nlm.nih.gov/${result.uid}/\n\n`
     ).join('');
     const blob = new Blob([resultsText], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -143,12 +142,22 @@ const SearchResults = () => {
     setFilters(prev => ({ ...prev, [key]: value }));
   }, []);
 
+  const handleMeshTermSelection = useCallback((term) => {
+    setSelectedMeshTerms(prev => {
+      if (prev.includes(term)) {
+        return prev.filter(t => t !== term);
+      } else {
+        return [...prev, term];
+      }
+    });
+  }, []);
+
   const MeshTermsSection = ({ 
     isMeshLoading, 
     meshError, 
     meshCombinations, 
-    meshSearchTerm, 
-    setMeshSearchTerm, 
+    selectedMeshTerms,
+    handleMeshTermSelection,
     originalSearchTerm 
   }) => {
     if (isMeshLoading) {
@@ -185,32 +194,36 @@ const SearchResults = () => {
     return (
       <div className="mb-4">
         <h3 className="text-lg font-semibold mb-2">MeSH Term Combinations:</h3>
-        <Select 
-          value={meshSearchTerm} 
-          onValueChange={setMeshSearchTerm}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select MeSH combination" />
-          </SelectTrigger>
-          <SelectContent>
-            {meshCombinations.map((combo, index) => (
-              <SelectItem key={index} value={combo || `combo_${index}`}>
-                {combo || `Combination ${index + 1}`}
-              </SelectItem>
-            ))}
-            <SelectItem value={originalSearchTerm || 'original'}>
+        <div className="space-y-2">
+          {meshCombinations.map((combo, index) => (
+            <div key={index} className="flex items-center space-x-2">
+              <Checkbox
+                id={`mesh-${index}`}
+                checked={selectedMeshTerms.includes(combo)}
+                onCheckedChange={() => handleMeshTermSelection(combo)}
+              />
+              <label htmlFor={`mesh-${index}`} className="text-sm">
+                {combo || `No combination available`}
+              </label>
+            </div>
+          ))}
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="original-term"
+              checked={selectedMeshTerms.includes(originalSearchTerm)}
+              onCheckedChange={() => handleMeshTermSelection(originalSearchTerm)}
+            />
+            <label htmlFor="original-term" className="text-sm">
               Original: {originalSearchTerm || 'No original term'}
-            </SelectItem>
-          </SelectContent>
-        </Select>
+            </label>
+          </div>
+        </div>
       </div>
     );
   };
 
   return (
     <div className="container mx-auto p-4">
-      <LoadingOverlay isLoading={isSearchLoading} message="Searching PubMed..." />
-      
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center">
           <Button variant="ghost" size="icon" onClick={handleBack} className="mr-2">
@@ -238,8 +251,8 @@ const SearchResults = () => {
         isMeshLoading={isMeshLoading}
         meshError={meshError}
         meshCombinations={meshCombinations}
-        meshSearchTerm={meshSearchTerm}
-        setMeshSearchTerm={setMeshSearchTerm}
+        selectedMeshTerms={selectedMeshTerms}
+        handleMeshTermSelection={handleMeshTermSelection}
         originalSearchTerm={searchTerm}
       />
 
@@ -288,6 +301,7 @@ const SearchResults = () => {
                   <TableHead>Title</TableHead>
                   <TableHead>Authors</TableHead>
                   <TableHead>Year</TableHead>
+                  <TableHead>Link</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -308,6 +322,11 @@ const SearchResults = () => {
                     <TableCell>{result.title}</TableCell>
                     <TableCell>{result.authors.join(', ')}</TableCell>
                     <TableCell>{result.year}</TableCell>
+                    <TableCell>
+                      <a href={`https://pubmed.ncbi.nlm.nih.gov/${result.uid}/`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline flex items-center">
+                        PubMed <ExternalLink className="ml-1 h-4 w-4" />
+                      </a>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
