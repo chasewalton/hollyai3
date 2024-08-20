@@ -18,6 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { processContentAndGenerateIntroduction } from '@/utils/openaiService';
 
 const IntroductionDraft = () => {
   const location = useLocation();
@@ -87,13 +88,13 @@ const IntroductionDraft = () => {
       for (let i = 4; i < steps.length; i++) {
         await processFixedStep(i);
       }
-      setIntroductionDraft(location.state?.introductionDraft || 'Introduction draft generated successfully.');
+      await generateIntroduction();
       setShowIntroduction(true);
       setShowFeedbackForm(true);
     };
 
     processSteps();
-  }, [location.state?.introductionDraft]);
+  }, []);
 
   const processVariableStep = async (stepIndex) => {
     const step = steps[stepIndex];
@@ -115,6 +116,23 @@ const IntroductionDraft = () => {
       setSteps(prevSteps => prevSteps.map((step, index) => 
         index === stepIndex ? { ...step, progress: (i / totalIterations) * 100 } : step
       ));
+    }
+  };
+
+  const generateIntroduction = async () => {
+    try {
+      const savedResults = JSON.parse(localStorage.getItem('savedResults') || '[]');
+      const processedContent = savedResults.map(result => ({
+        id: result.uid,
+        content: result.content || '',
+        abstract: result.abstract || ''
+      }));
+      const themeData = location.state?.themes || [];
+      const generatedIntroduction = await processContentAndGenerateIntroduction(processedContent, themeData);
+      setIntroductionDraft(generatedIntroduction);
+    } catch (error) {
+      console.error('Error generating introduction:', error);
+      setIntroductionDraft('Failed to generate introduction. Please try again.');
     }
   };
 

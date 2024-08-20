@@ -54,14 +54,14 @@ export const generateAITheme = async (existingThemes) => {
 export const processContentAndGenerateIntroduction = async (processedContent, themeData) => {
   try {
     const contentSummary = processedContent.map(item => `ID: ${item.id}\nAbstract: ${item.abstract}\nContent: ${item.content}`).join('\n\n');
-    const themeSummary = themeData.map(theme => `Theme: ${theme.text}, Importance: ${theme.importance}`).join('\n');
+    const themeSummary = themeData.map(theme => `Theme: ${theme.text}, Importance: ${theme.rating}`).join('\n');
 
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo-16k", // Using a model with larger context window
       messages: [
         {
           role: "system",
-          content: "You are an expert academic writer tasked with generating a comprehensive introduction for a research paper. Use the provided content and themes to create a well-structured, informative introduction that sets the context for the research, highlights key themes, and presents a clear research question or objective."
+          content: "You are an expert academic writer tasked with generating a comprehensive introduction for a research paper. Use the provided content and themes to create a well-structured, informative introduction that sets the context for the research, highlights key themes, and presents a clear research question or objective. Your response should demonstrate the use of Hybrid Retrieval-Generation Models, Knowledge-Enhanced Text Generation, Memory-Augmented Neural Networks (MANNs), and Attention Mechanisms in synthesizing the information."
         },
         {
           role: "user",
@@ -79,6 +79,7 @@ Please write an introduction that:
 3. Identifies gaps in current knowledge or areas of controversy
 4. Presents a clear research question or objective
 5. Briefly outlines the structure of the paper
+6. Demonstrates the use of advanced NLP techniques in synthesizing the information
 
 The introduction should be well-structured, engaging, and approximately 500-750 words long.`
         }
