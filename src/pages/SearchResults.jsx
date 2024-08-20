@@ -47,7 +47,7 @@ const SearchResults = () => {
       const combinations = generateMeshCombinations(meshTerms);
       setMeshCombinations(combinations);
       setMeshSearchTerm(combinations[0]);
-    } else if (meshTerms && meshTerms.length === 0) {
+    } else {
       // If no MeSH terms are found, use the original search term
       setMeshCombinations([searchTerm]);
       setMeshSearchTerm(searchTerm);
@@ -71,11 +71,24 @@ const SearchResults = () => {
   };
 
   const fetchPubMedResults = async () => {
+    if (!meshSearchTerm) {
+      throw new Error('No search term provided');
+    }
     const response = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(meshSearchTerm)}&retmode=json&retmax=100`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     const data = await response.json();
     const ids = data.esearchresult.idlist;
     
+    if (ids.length === 0) {
+      throw new Error('No results found for the given search term');
+    }
+    
     const summaryResponse = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${ids.join(',')}&retmode=json`);
+    if (!summaryResponse.ok) {
+      throw new Error(`HTTP error! status: ${summaryResponse.status}`);
+    }
     const summaryData = await summaryResponse.json();
     
     return Object.values(summaryData.result).filter(item => item.uid);
@@ -85,6 +98,7 @@ const SearchResults = () => {
     queryKey: ['pubmedSearch', meshSearchTerm],
     queryFn: fetchPubMedResults,
     enabled: false,
+    retry: 1,
   });
 
   useEffect(() => {

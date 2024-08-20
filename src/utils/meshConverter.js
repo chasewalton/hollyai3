@@ -10,6 +10,7 @@ const fetchMeshTerms = async (searchTerm) => {
     const meshIds = data.esearchresult.idlist;
 
     if (meshIds.length === 0) {
+      console.log('No MeSH terms found for the given search term');
       return [];
     }
 
@@ -19,7 +20,14 @@ const fetchMeshTerms = async (searchTerm) => {
     }
     const meshData = await meshResponse.json();
     
-    return Object.values(meshData.result).filter(item => item.uid).map(item => item.name);
+    const meshTerms = Object.values(meshData.result).filter(item => item.uid).map(item => item.name);
+    
+    if (meshTerms.length === 0) {
+      console.log('No valid MeSH terms found in the response');
+      return [];
+    }
+    
+    return meshTerms;
   } catch (error) {
     console.error('Error fetching MeSH terms:', error);
     throw error;
@@ -31,10 +39,19 @@ export const useMeshTerms = (searchTerm) => {
     queryKey: ['meshTerms', searchTerm],
     queryFn: () => fetchMeshTerms(searchTerm),
     enabled: !!searchTerm,
+    retry: 1,
+    onError: (error) => {
+      console.error('Error in useMeshTerms:', error);
+    },
   });
 };
 
 export const generateMeshCombinations = (meshTerms, maxCombinations = 5) => {
+  if (!meshTerms || meshTerms.length === 0) {
+    console.log('No MeSH terms provided for combinations');
+    return [];
+  }
+
   const combinations = [];
   
   for (let i = 0; i < meshTerms.length; i++) {
