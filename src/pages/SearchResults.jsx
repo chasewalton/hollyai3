@@ -55,7 +55,7 @@ const SearchResults = () => {
 
   const meshSearchTerm = useMemo(() => {
     return selectedMeshTerms.length > 0
-      ? selectedMeshTerms.join(' OR ')
+      ? `(${selectedMeshTerms.join(') OR (')})`
       : searchTerm;
   }, [selectedMeshTerms, searchTerm]);
 
@@ -142,21 +142,15 @@ const SearchResults = () => {
     setFilters(prev => ({ ...prev, [key]: value }));
   }, []);
 
-  const handleMeshTermSelection = useCallback((term) => {
-    setSelectedMeshTerms(prev => {
-      if (prev.includes(term)) {
-        return prev.filter(t => t !== term);
-      } else {
-        return [...prev, term];
-      }
-    });
+  const handleMeshTermSelection = useCallback((terms) => {
+    setSelectedMeshTerms(terms);
   }, []);
 
   useEffect(() => {
     if (meshCombinations.length > 0 && selectedMeshTerms.length === 0) {
       setSelectedMeshTerms([meshCombinations[0]]);
     }
-  }, [meshCombinations]);
+  }, [meshCombinations, selectedMeshTerms]);
 
   const MeshTermsSection = ({ 
     isMeshLoading, 
@@ -200,30 +194,25 @@ const SearchResults = () => {
     return (
       <div className="mb-4">
         <h3 className="text-lg font-semibold mb-2">MeSH Term Combinations:</h3>
-        <div className="space-y-2">
-          {meshCombinations.map((combo, index) => (
-            <div key={index} className="flex items-center space-x-2">
-              <Checkbox
-                id={`mesh-${index}`}
-                checked={selectedMeshTerms.includes(combo)}
-                onCheckedChange={() => handleMeshTermSelection(combo)}
-              />
-              <label htmlFor={`mesh-${index}`} className="text-sm">
+        <Select
+          multiple
+          value={selectedMeshTerms}
+          onValueChange={handleMeshTermSelection}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select MeSH terms" />
+          </SelectTrigger>
+          <SelectContent>
+            {meshCombinations.map((combo, index) => (
+              <SelectItem key={index} value={combo}>
                 {combo}
-              </label>
-            </div>
-          ))}
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="original-term"
-              checked={selectedMeshTerms.includes(originalSearchTerm)}
-              onCheckedChange={() => handleMeshTermSelection(originalSearchTerm)}
-            />
-            <label htmlFor="original-term" className="text-sm">
+              </SelectItem>
+            ))}
+            <SelectItem value={originalSearchTerm}>
               Original: {originalSearchTerm}
-            </label>
-          </div>
-        </div>
+            </SelectItem>
+          </SelectContent>
+        </Select>
       </div>
     );
   };
