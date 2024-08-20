@@ -97,6 +97,11 @@ const SearchResults = () => {
   };
 
   const handleNextStep = async () => {
+    if (selectedResults.length === 0) {
+      alert("Please select at least one article before proceeding.");
+      return;
+    }
+
     const selectedArticles = filteredResults.filter(result => selectedResults.includes(result.uid));
     const articlesData = await Promise.all(selectedArticles.map(async (article) => {
       const abstractResponse = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${article.uid}&retmode=text&rettype=abstract`);
@@ -108,23 +113,32 @@ const SearchResults = () => {
       };
     }));
 
-    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer sk-svcacct-dALVXu6jJh-OP43b-fHTG6DGJNHALbST0gDrnpAoQfqqKVlmssgnlT3BlbkFJ0rb1xLB-W1zvuGuYjujubIxT20SMUbiMkYY2ib7lqwW-5AlLtQPXgA'
-      },
-      body: JSON.stringify({
-        model: 'gpt-4',
-        messages: [
-          { role: 'system', content: 'You are a helpful assistant that analyzes scientific abstracts and identifies recurring themes.' },
-          { role: 'user', content: `Analyze the following abstracts and identify the top 5 recurring themes:\n\n${articlesData.map(article => `Title: ${article.title}\nAbstract: ${article.abstract}\n\n`).join('')}` }
-        ]
-      })
-    });
+    try {
+      const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer sk-svcacct-dALVXu6jJh-OP43b-fHTG6DGJNHALbST0gDrnpAoQfqqKVlmssgnlT3BlbkFJ0rb1xLB-W1zvuGuYjujubIxT20SMUbiMkYY2ib7lqwW-5AlLtQPXgA'
+        },
+        body: JSON.stringify({
+          model: 'gpt-4',
+          messages: [
+            { role: 'system', content: 'You are a helpful assistant that analyzes scientific abstracts and identifies recurring themes.' },
+            { role: 'user', content: `Analyze the following abstracts and identify the top 5 recurring themes:\n\n${articlesData.map(article => `Title: ${article.title}\nAbstract: ${article.abstract}\n\n`).join('')}` }
+          ]
+        })
+      });
 
-    const themes = await openAIResponse.json();
-    navigate('/theme-analysis', { state: { themes: themes.choices[0].message.content } });
+      if (!openAIResponse.ok) {
+        throw new Error('Failed to get response from OpenAI');
+      }
+
+      const themes = await openAIResponse.json();
+      navigate('/theme-analysis', { state: { themes: themes.choices[0].message.content } });
+    } catch (error) {
+      console.error('Error in theme analysis:', error);
+      alert('An error occurred during theme analysis. Please try again.');
+    }
   };
 
   return (

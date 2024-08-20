@@ -14,7 +14,11 @@ const ThemeAnalysis = () => {
           <CardTitle>Recurring Themes</CardTitle>
         </CardHeader>
         <CardContent>
-          <pre className="whitespace-pre-wrap">{themes}</pre>
+          {themes ? (
+            <pre className="whitespace-pre-wrap">{themes}</pre>
+          ) : (
+            <p>No themes available. Please go back and select articles for analysis.</p>
+          )}
         </CardContent>
       </Card>
     </div>
