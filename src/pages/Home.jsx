@@ -4,7 +4,6 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { PlusCircle, Upload, ArrowLeft } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { Input } from "@/components/ui/input";
-import NewProjectDialog from '../components/NewProjectDialog';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -13,29 +12,30 @@ const Home = () => {
     { id: 2, name: "Project B", lastEdited: "2023-04-10" },
     { id: 3, name: "Project C", lastEdited: "2023-04-05" },
   ]);
-  const [isNewProjectDialogOpen, setIsNewProjectDialogOpen] = useState(false);
+  const [newProjectName, setNewProjectName] = useState('');
 
   const handleBack = () => {
     console.log("Back button clicked on home page");
   };
 
-  const handleNewProject = () => {
-    setIsNewProjectDialogOpen(true);
-  };
-
-  const handleCreateProject = (projectName) => {
-    const newProject = {
-      id: projects.length + 1,
-      name: projectName,
-      lastEdited: new Date().toISOString().split('T')[0]
-    };
-    setProjects([...projects, newProject]);
-    setIsNewProjectDialogOpen(false);
-    navigate('/search');
+  const handleCreateProject = () => {
+    if (newProjectName.trim()) {
+      const newProject = {
+        id: projects.length + 1,
+        name: newProjectName.trim(),
+        lastEdited: new Date().toISOString().split('T')[0]
+      };
+      setProjects([...projects, newProject]);
+      setNewProjectName('');
+      navigate('/search', { state: { projectTitle: newProjectName.trim() } });
+    } else {
+      alert('Please enter a project name.');
+    }
   };
 
   const handleSelectProject = (projectId) => {
-    navigate('/search');
+    const selectedProject = projects.find(project => project.id === projectId);
+    navigate('/search', { state: { projectTitle: selectedProject.name } });
   };
 
   const handleFileUpload = (event, type) => {
@@ -57,9 +57,18 @@ const Home = () => {
         <div className="w-full md:w-1/2">
           <h2 className="text-2xl font-semibold mb-4">Start New Project</h2>
           <p className="mb-4">Begin your PubMed research journey with a new project.</p>
-          <Button onClick={handleNewProject} className="w-full mb-4">
-            <PlusCircle className="mr-2 h-4 w-4" /> Start New Project
-          </Button>
+          <div className="flex gap-2 mb-4">
+            <Input
+              type="text"
+              value={newProjectName}
+              onChange={(e) => setNewProjectName(e.target.value)}
+              placeholder="Enter project name"
+              className="flex-grow"
+            />
+            <Button onClick={handleCreateProject}>
+              <PlusCircle className="mr-2 h-4 w-4" /> Create Project
+            </Button>
+          </div>
           <div className="grid grid-cols-1 gap-4">
             {projects.map((project) => (
               <Card key={project.id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleSelectProject(project.id)}>
@@ -99,11 +108,6 @@ const Home = () => {
           </Card>
         </div>
       </div>
-      <NewProjectDialog
-        isOpen={isNewProjectDialogOpen}
-        onClose={() => setIsNewProjectDialogOpen(false)}
-        onCreateProject={handleCreateProject}
-      />
     </div>
   );
 };
