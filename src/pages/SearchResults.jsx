@@ -6,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLocation, useNavigate } from 'react-router-dom';
-import { X, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, ChevronDown, ChevronUp, Save, Download } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -29,6 +29,22 @@ const SearchResults = () => {
   const [textAvailability, setTextAvailability] = useState('');
   const [articleType, setArticleType] = useState('');
   const [publicationDate, setPublicationDate] = useState('');
+
+  const handleSaveResults = () => {
+    const newSavedResults = filteredResults.filter(result => selectedResults.includes(result.uid));
+    setSavedResults(prevSaved => [...prevSaved, ...newSavedResults]);
+    setSelectedResults([]);
+    alert('Selected results have been saved.');
+  };
+
+  const handleDownloadPDFs = () => {
+    const selectedPDFs = filteredResults.filter(result => selectedResults.includes(result.uid));
+    selectedPDFs.forEach(result => {
+      const pdfUrl = `https://www.ncbi.nlm.nih.gov/pmc/articles/${result.pmc}/pdf/`;
+      window.open(pdfUrl, '_blank');
+    });
+    alert('PDF downloads have been initiated for selected results.');
+  };
 
   const fetchPubMedResults = async () => {
     const response = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(searchTerm)}&retmode=json&retmax=100`);
@@ -259,6 +275,10 @@ const SearchResults = () => {
         {/* Search Results Column */}
         <div className="w-1/2">
           <h2 className="text-xl font-semibold mb-4">Search Results</h2>
+          <div className="flex space-x-2 mb-4">
+            <Button onClick={handleSaveResults}>Save Results</Button>
+            <Button onClick={handleDownloadPDFs}>Download PDFs</Button>
+          </div>
           {isLoading && <p>Loading...</p>}
           {isError && <p>Error fetching results. Please try again.</p>}
 
