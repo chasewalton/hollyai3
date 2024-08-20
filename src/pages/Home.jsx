@@ -8,16 +8,16 @@ import { Input } from "@/components/ui/input";
 const Home = () => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState([
+    { id: 1, name: "Project A", lastEdited: "2023-04-15" },
+    { id: 2, name: "Project B", lastEdited: "2023-04-10" },
+    { id: 3, name: "Project C", lastEdited: "2023-04-05" },
+  ]);
 
   const handleBack = () => {
     // Since this is the home page, we might not want to navigate back
     // You can customize this behavior as needed
     console.log("Back button clicked on home page");
   };
-    { id: 1, name: "Project A", lastEdited: "2023-04-15" },
-    { id: 2, name: "Project B", lastEdited: "2023-04-10" },
-    { id: 3, name: "Project C", lastEdited: "2023-04-05" },
-  ]);
 
   const handleNewProject = () => {
     navigate('/search');
