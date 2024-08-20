@@ -4,6 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { PlusCircle, Upload, ArrowLeft } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { Input } from "@/components/ui/input";
+import NewProjectDialog from '../components/NewProjectDialog';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -12,14 +13,24 @@ const Home = () => {
     { id: 2, name: "Project B", lastEdited: "2023-04-10" },
     { id: 3, name: "Project C", lastEdited: "2023-04-05" },
   ]);
+  const [isNewProjectDialogOpen, setIsNewProjectDialogOpen] = useState(false);
 
   const handleBack = () => {
-    // Since this is the home page, we might not want to navigate back
-    // You can customize this behavior as needed
     console.log("Back button clicked on home page");
   };
 
   const handleNewProject = () => {
+    setIsNewProjectDialogOpen(true);
+  };
+
+  const handleCreateProject = (projectName) => {
+    const newProject = {
+      id: projects.length + 1,
+      name: projectName,
+      lastEdited: new Date().toISOString().split('T')[0]
+    };
+    setProjects([...projects, newProject]);
+    setIsNewProjectDialogOpen(false);
     navigate('/search');
   };
 
@@ -31,7 +42,6 @@ const Home = () => {
     const file = event.target.files[0];
     if (file) {
       console.log(`Uploading ${type}: ${file.name}`);
-      // Here you would handle the file upload logic
     }
   };
 
@@ -89,6 +99,11 @@ const Home = () => {
           </Card>
         </div>
       </div>
+      <NewProjectDialog
+        isOpen={isNewProjectDialogOpen}
+        onClose={() => setIsNewProjectDialogOpen(false)}
+        onCreateProject={handleCreateProject}
+      />
     </div>
   );
 };
