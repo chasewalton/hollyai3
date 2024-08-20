@@ -204,12 +204,12 @@ const SearchResults = () => {
           </SelectTrigger>
           <SelectContent>
             {meshCombinations.map((combo, index) => (
-              <SelectItem key={index} value={combo}>
-                {combo}
+              <SelectItem key={index} value={combo || `combo-${index}`}>
+                {combo || `Combination ${index + 1}`}
               </SelectItem>
             ))}
-            <SelectItem value={originalSearchTerm}>
-              Original: {originalSearchTerm}
+            <SelectItem value={originalSearchTerm || 'original'}>
+              Original: {originalSearchTerm || 'No original term'}
             </SelectItem>
           </SelectContent>
         </Select>
