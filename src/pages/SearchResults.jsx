@@ -59,7 +59,7 @@ const SearchResults = () => {
     return Object.values(summaryData.result).filter(item => item.uid);
   };
 
-  const { data: results, isLoading, isError, refetch } = useQuery({
+  const { data: results, isLoading: isQueryLoading, isError, refetch } = useQuery({
     queryKey: ['pubmedSearch', searchTerm],
     queryFn: fetchPubMedResults,
     enabled: !!searchTerm,
@@ -286,7 +286,7 @@ const SearchResults = () => {
             <Button onClick={handleSaveResults}>Save Results</Button>
             <Button onClick={handleDownloadPDFs}>Download PDFs</Button>
           </div>
-          {isLoading && <p>Loading...</p>}
+          {isQueryLoading && <p>Loading...</p>}
           {isError && <p>Error fetching results. Please try again.</p>}
 
           {filteredResults && (
