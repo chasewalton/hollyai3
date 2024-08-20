@@ -19,11 +19,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { processContentAndGenerateIntroduction } from '@/utils/openaiService';
+import CitationTooltip from '@/components/CitationTooltip';
 
 const IntroductionDraft = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [introductionDraft, setIntroductionDraft] = useState('');
+  const [processedIntroduction, setProcessedIntroduction] = useState([]);
   const [showIntroduction, setShowIntroduction] = useState(false);
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
   const [steps, setSteps] = useState([
@@ -105,6 +107,18 @@ const IntroductionDraft = () => {
           }
         );
         setIntroductionDraft(generatedIntroduction);
+        
+        // Process the introduction to add citation tooltips
+        const processedText = generatedIntroduction.split(/(\[ID\d+\])/).map((part, index) => {
+          if (part.match(/\[ID\d+\]/)) {
+            const citationId = part.slice(1, -1);
+            const citationSource = processedContent.find(item => item.id === citationId)?.title || 'Unknown source';
+            return { type: 'citation', content: part, source: citationSource };
+          }
+          return { type: 'text', content: part };
+        });
+        setProcessedIntroduction(processedText);
+        
         setShowIntroduction(true);
         setShowFeedbackForm(true);
       } catch (error) {
@@ -227,7 +241,19 @@ const IntroductionDraft = () => {
             </CardHeader>
             <CardContent>
               <div className="whitespace-pre-wrap">
-                {showIntroduction ? introductionDraft : 'Generating introduction...'}
+                {showIntroduction ? (
+                  processedIntroduction.map((part, index) => (
+                    part.type === 'citation' ? (
+                      <CitationTooltip key={index} citation={part.source}>
+                        {part.content}
+                      </CitationTooltip>
+                    ) : (
+                      <span key={index}>{part.content}</span>
+                    )
+                  ))
+                ) : (
+                  'Generating introduction...'
+                )}
               </div>
             </CardContent>
           </Card>
