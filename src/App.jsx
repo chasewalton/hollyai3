@@ -1,3 +1,4 @@
+import React from 'react';  // Make sure to import React
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -14,6 +15,7 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      <div>App is rendering</div>  {/* Add this line */}
       <Toaster />
       <BrowserRouter>
         <Navigation />
