@@ -23,7 +23,7 @@ export default defineConfig({
   },
   esbuild: {
     loader: "jsx",
-    include: /src\/.*\.[jt]sx?$/,  // This line ensures both .jsx and .js files are handled correctly
+    include: /src\/.*\.[jt]sx?$/,  // This line ensures both .js and .js files are handled correctly
     exclude: [],
   },
   optimizeDeps: {

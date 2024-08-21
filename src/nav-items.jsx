@@ -1,8 +1,8 @@
 import { Home, Search, Info, BarChart2 } from "lucide-react";
-import HomePage from "./pages/Home.jsx";
-import SearchPage from "./pages/Search.jsx";
-import AboutPage from "./pages/About.jsx";
-import ThemeAnalysisPage from "./pages/ThemeAnalysis.jsx";
+import HomePage from "./pages/Home.js";
+import SearchPage from "./pages/Search.js";
+import AboutPage from "./pages/About.js";
+import ThemeAnalysisPage from "./pages/ThemeAnalysis.js";
 
 export const navItems = [
   {
