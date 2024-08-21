@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     host: true,
     port: 8080,
-  }
+  }, // Missing comma added here
   plugins: [react()],
   resolve: {
     alias: [
@@ -23,7 +23,7 @@ export default defineConfig({
   },
   esbuild: {
     loader: "jsx",
-    include: /src\/.*\.jsx?$/,
+    include: /src\/.*\.[jt]sx?$/,  // This line ensures both .jsx and .js files are handled correctly
     exclude: [],
   },
   optimizeDeps: {
