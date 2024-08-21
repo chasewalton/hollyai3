@@ -5,10 +5,9 @@ import { resolve } from "path";
 
 export default defineConfig({
   server: {
-    middlewareMode: 'html'
-    host: '0.0.0.0',
-    port: "8080",
-  },
+    host: true,
+    port: 8080,
+  }
   plugins: [react()],
   resolve: {
     alias: [
