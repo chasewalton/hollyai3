@@ -4,7 +4,7 @@ import react from "@vitejs/plugin-react";
 import { resolve } from "path";
 
 export default defineConfig({
-  base: '/',
+  base: '/hollyai3/',
   server: {
     host: true,
     port: 8080,
