@@ -12,21 +12,22 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Setup Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: '18'  # Use the Node.js version your project requires
+        cache: 'npm'  # Cache npm modules
 
     - name: Install dependencies
-      run: npm install
+      run: npm ci  # Uses 'ci' for a clean install based on package-lock.json
 
     - name: Build the project
       run: npm run build
 
     - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
+      uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./dist  # The directory with the built files to be deployed
